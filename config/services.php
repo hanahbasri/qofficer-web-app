@@ -31,4 +31,14 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Firebase Cloud Messaging (FCM)
+    'firebase' => [
+        'server_key' => env('FIREBASE_SERVER_KEY'),
+    ],
+
+    // BEST-TRUST integrasi (simulasi bila kosong)
+    'best_trust' => [
+        'url' => env('BEST_TRUST_URL'),
+    ],
+
 ];
