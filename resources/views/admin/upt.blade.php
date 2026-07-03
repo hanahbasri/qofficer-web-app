@@ -22,6 +22,13 @@
             <i class="bi bi-building"></i><span>UPT</span>
         </a>
     </li>
+
+    <li class="nav-item">
+        <a href="{{ route('admin.log-sistem') }}" data-label="Log Sistem"
+            class="nav-link {{ request()->routeIs('admin.log-sistem') ? 'active' : '' }}">
+            <i class="bi bi-journal-text"></i><span>Log Sistem</span>
+        </a>
+    </li>
     <li class="nav-item">
         <a href="{{ route('admin.profil') }}" data-label="Profil"
             class="nav-link {{ request()->routeIs('admin.profil') ? 'active' : '' }}">
@@ -59,23 +66,68 @@
             padding: .9rem 1.25rem;
             background: #f8fafc;
         }
+
+        .modal-action-btn {
+            width: 118px;
+            height: 38px;
+            padding: 0 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .35rem;
+            line-height: 1;
+        }
+
+        .modal-action-btn .bi {
+            margin-right: 0 !important;
+            font-size: .95rem;
+        }
+
+        .upt-search {
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            max-width: 340px;
+            background: #fff;
+            border: 1.5px solid #dee2e6;
+            border-radius: .75rem;
+            padding: .15rem .8rem;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .upt-search:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 .18rem rgba(19, 49, 57, .12);
+        }
+
+        .upt-search-icon {
+            color: #9ca3af;
+            font-size: .9rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .upt-search-input {
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            padding: .42rem 0 !important;
+            font-size: .84rem !important;
+        }
+
+        .upt-search-input:focus {
+            border: none !important;
+            box-shadow: none !important;
+        }
     </style>
 @endpush
 
 @section('content')
-    {{-- Flash messages --}}
-    @if (session('success'))
-        <div class="alert d-flex align-items-center gap-2 mb-4 py-2 px-3"
-            style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:.65rem;font-size:.84rem;color:#166534">
-            <i class="bi bi-check-circle-fill flex-shrink-0" style="color:#16a34a;font-size:1rem"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
-    @if (session('error') || $errors->any())
+    @if ($errors->any())
         <div class="alert d-flex align-items-center gap-2 mb-4 py-2 px-3"
             style="background:#fef2f2;border:1px solid #fecaca;border-radius:.65rem;font-size:.84rem;color:#991b1b">
             <i class="bi bi-exclamation-triangle-fill flex-shrink-0" style="color:#dc2626;font-size:1rem"></i>
-            <span>{{ session('error') ?? $errors->first() }}</span>
+            <span>{{ $errors->first() }}</span>
         </div>
     @endif
 
@@ -90,13 +142,11 @@
     </div>
 
     {{-- Search bar --}}
-    <div class="mb-3" style="max-width:340px">
-        <div class="input-group input-group-sm">
-            <span class="input-group-text bg-white border-end-0" style="border-color:#dee2e6">
-                <i class="bi bi-search" style="color:#9ca3af;font-size:.85rem"></i>
-            </span>
-            <input type="text" id="uptSearch" class="form-control border-start-0 ps-0"
-                placeholder="Cari kode, nama, wilayah…" style="border-color:#dee2e6;font-size:.84rem">
+    <div class="mb-3">
+        <div class="upt-search">
+            <i class="bi bi-search upt-search-icon"></i>
+            <input type="text" id="uptSearch" class="form-control upt-search-input" autocomplete="off"
+                placeholder="Cari kode, nama, wilayah...">
         </div>
     </div>
 
@@ -107,7 +157,7 @@
                     <tr>
                         <th>Kode</th>
                         <th>Nama UPT</th>
-                        <th>Tampil di Dashboard</th>
+                        <th>Alias</th>
                         <th>Wilayah</th>
                         <th class="text-center">Pengguna</th>
                         <th>Aksi</th>
@@ -128,19 +178,9 @@
                                 @endif
                             </td>
                             <td style="font-size:.82rem">
-                                {{-- Short name yang muncul di chart/tabel pimpinan --}}
-                                <span class="fw-semibold" style="color:var(--primary)">{{ $upt->short_name }}</span>
-                                @if ($upt->alias)
-                                    <div style="font-size:.75rem;color:#9ca3af;margin-top:.1rem">
-                                        dari alias manual
-                                    </div>
-                                @else
-                                    <div style="font-size:.75rem;color:#9ca3af;margin-top:.1rem">
-                                        auto-generate
-                                    </div>
-                                @endif
+                                <span class="fw-semibold" style="color:var(--primary)">{{ $upt->alias ?: '-' }}</span>
                             </td>
-                            <td class="upt-wilayah" style="font-size:.82rem;color:#6b7280">{{ $upt->wilayah ?? '—' }}</td>
+                            <td class="upt-wilayah" style="font-size:.82rem;color:#6b7280">{{ $upt->wilayah ?? '-' }}</td>
                             <td class="text-center">
                                 <a href="{{ route('admin.pengguna', ['upt' => $upt->kode]) }}"
                                     class="badge text-decoration-none" title="Lihat pengguna UPT ini"
@@ -203,15 +243,14 @@
                     <div class="mb-3">
                         <label class="form-label">Nama UPT <span class="text-danger">*</span></label>
                         <input type="text" name="nama" class="form-control" required
-                            placeholder="BBKHIT Aceh — Satpel Lhokseumawe">
+                            placeholder="BBKHIT Aceh - Satpel Lhokseumawe">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Alias / Singkatan
+                        <label class="form-label">Alias
                             <span class="text-muted fw-normal" style="font-size:.78rem">(opsional)</span>
                         </label>
                         <input type="text" name="alias" class="form-control" maxlength="60"
                             placeholder="BBKHIT Aceh">
-                        <div class="form-text">Nama singkat yang ditampilkan di dashboard pimpinan.</div>
                     </div>
                     <div class="mb-1">
                         <label class="form-label">Wilayah</label>
@@ -219,9 +258,10 @@
                     </div>
                 </div>
                 <div class="modal-footer gap-2">
-                    <button type="button" class="btn btn-ghost btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-brand btn-sm">
-                        <i class="bi bi-check2 me-1"></i>Simpan
+                    <button type="button" class="btn btn-outline-brand btn-sm modal-action-btn"
+                        data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-brand btn-sm modal-action-btn">
+                        <i class="bi bi-check2"></i>Simpan
                     </button>
                 </div>
             </form>
@@ -250,12 +290,11 @@
                         <input type="text" name="nama" id="editNama" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Alias / Singkatan
+                        <label class="form-label">Alias
                             <span class="text-muted fw-normal" style="font-size:.78rem">(opsional)</span>
                         </label>
                         <input type="text" name="alias" id="editAlias" class="form-control" maxlength="60"
                             placeholder="contoh: BBKHIT DKI JKT">
-                        <div class="form-text">Nama singkat yang ditampilkan di dashboard pimpinan.</div>
                     </div>
                     <div class="mb-1">
                         <label class="form-label">Wilayah</label>
@@ -263,9 +302,10 @@
                     </div>
                 </div>
                 <div class="modal-footer gap-2">
-                    <button type="button" class="btn btn-ghost btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-brand btn-sm">
-                        <i class="bi bi-check2 me-1"></i>Simpan
+                    <button type="button" class="btn btn-outline-brand btn-sm modal-action-btn"
+                        data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-brand btn-sm modal-action-btn">
+                        <i class="bi bi-check2"></i>Simpan
                     </button>
                 </div>
             </form>
@@ -281,7 +321,7 @@
                 document.getElementById('editNama').value = btn.dataset.nama;
                 document.getElementById('editAlias').value = btn.dataset.alias || '';
                 document.getElementById('editWilayah').value = btn.dataset.wilayah || '';
-                document.getElementById('editUptForm').action = '/admin/upt/' + btn.dataset.kode;
+                document.getElementById('editUptForm').action = '{{ route("admin.upt") }}' + '/' + btn.dataset.kode;
             });
 
             // Client-side search filter

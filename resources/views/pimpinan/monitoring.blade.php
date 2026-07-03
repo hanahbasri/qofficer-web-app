@@ -24,6 +24,12 @@
             <i class="bi bi-download"></i><span>Ekspor Data</span>
         </a>
     </li>
+    <li class="nav-item">
+        <a href="{{ route('pimpinan.keamanan') }}" data-label="Keamanan Akun"
+            class="nav-link {{ request()->routeIs('pimpinan.keamanan') ? 'active' : '' }}">
+            <i class="bi bi-key-fill"></i><span>Keamanan Akun</span>
+        </a>
+    </li>
 @endsection
 
 @section('content')
@@ -112,7 +118,7 @@
                         </span>
                     </td>
                     <td style="font-size:.8rem;max-width:160px">
-                        <div class="fw-semibold">{{ $hasil->suratTugas?->upt?->nama ?? '-' }}</div>
+                        <div class="fw-semibold" style="overflow-wrap:anywhere">{{ $hasil->suratTugas?->upt?->nama ?? '-' }}</div>
                     </td>
                     <td style="font-size:.82rem">{{ $hasil->petugas?->nama ?? '-' }}</td>
                     <td style="font-size:.8rem;white-space:nowrap">

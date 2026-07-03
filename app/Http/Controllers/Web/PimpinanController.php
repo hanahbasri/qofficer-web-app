@@ -7,9 +7,12 @@ use App\Models\HasilPemeriksaan;
 use App\Models\SuratTugas;
 use App\Models\Upt;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PimpinanController extends Controller
@@ -23,6 +26,9 @@ class PimpinanController extends Controller
         $dateRange  = $this->getPeriodeRange($periode, $request);
         $uptScope   = $this->uptScope();
         $isNasional = empty($uptScope);
+        $scopeUptName = $isNasional
+            ? 'Seluruh UPT Barantin'
+            : (Upt::where('kode', $uptScope[0])->value('nama') ?? 'UPT Anda');
 
         // ── KPI dari hasil pemeriksaan & tindakan karantina ──────────
         $baseHasil = HasilPemeriksaan::whereBetween('tgl_periksa', $dateRange)
@@ -47,7 +53,7 @@ class PimpinanController extends Controller
         $totalUpt = $indukList->count();
 
         // Hitung pemeriksaan per UPT dengan subquery (termasuk satpel se-UPT)
-        $periksaStats = \DB::table('hasil_pemeriksaan as hp')
+        $periksaStats = DB::table('hasil_pemeriksaan as hp')
             ->join('surat_tugas as st', 'hp.id_surat_tugas', '=', 'st.id')
             ->join('upt as u_satpel', 'st.upt_id', '=', 'u_satpel.kode')
             ->join('upt as u_induk', 'u_satpel.nama', '=', 'u_induk.nama')
@@ -76,32 +82,15 @@ class PimpinanController extends Controller
         })->sortByDesc('total_periksa_count')->values();
 
         // Chart: semua UPT (termasuk yang kosong dengan 0 data)
-        $chartLabels        = $rekapUpt->map(fn($u) => \Str::limit($u->display_name, 20))->values();
+        $chartLabels        = $rekapUpt->map(fn($u) => Str::limit($u->display_name, 20))->values();
         $chartPelepasan     = $rekapUpt->pluck('pelepasan_count')->values();
         $chartPerluTindakan = $rekapUpt->pluck('perlu_tindakan_count')->values();
 
         // ── Tindakan per komoditas (pimpinan nasional) ────────────────
-        $tindakanPerKomoditas = collect();
-        if ($isNasional) {
-            $komoditasMap = ['H' => 'Hewan', 'I' => 'Ikan', 'T' => 'Tumbuhan'];
-            $tindakanPerKomoditas = HasilPemeriksaan::selectRaw(
-                    "hasil_pemeriksaan.komoditas, rekomendasi_karantina.tindakan, COUNT(*) as jumlah"
-                )
-                ->join('rekomendasi_karantina', 'hasil_pemeriksaan.id', '=', 'rekomendasi_karantina.id_hasil_pemeriksaan')
-                ->whereBetween('hasil_pemeriksaan.tgl_periksa', $dateRange)
-                ->groupBy('komoditas', 'tindakan')
-                ->get()
-                ->map(fn($row) => [
-                    'komoditas' => $komoditasMap[$row->komoditas] ?? $row->komoditas,
-                    'tindakan'  => $row->tindakan,
-                    'jumlah'    => $row->jumlah,
-                ]);
-        }
-
         // ── Tindakan per UPT (semua: pelepasan, penolakan, perlakuan, pemusnahan) ────────
         $tindakanPerUpt = collect();
         if ($isNasional) {
-            $tindakanPerUpt = \DB::table('hasil_pemeriksaan as hp')
+            $tindakanPerUpt = DB::table('hasil_pemeriksaan as hp')
                 ->join('surat_tugas as st', 'hp.id_surat_tugas', '=', 'st.id')
                 ->join('upt as u_satpel', 'st.upt_id', '=', 'u_satpel.kode')
                 ->join('upt as u_induk', 'u_satpel.nama', '=', 'u_induk.nama')
@@ -126,29 +115,51 @@ class PimpinanController extends Controller
                     'perlakuan' => (int)$row->perlakuan_count,
                     'pemusnahan' => (int)$row->pemusnahan_count,
                 ]);
+        } else {
+            $row = DB::table('hasil_pemeriksaan as hp')
+                ->join('surat_tugas as st', 'hp.id_surat_tugas', '=', 'st.id')
+                ->leftJoin('rekomendasi_karantina as rk', 'hp.id', '=', 'rk.id_hasil_pemeriksaan')
+                ->whereBetween('hp.tgl_periksa', $dateRange)
+                ->whereIn('st.upt_id', $uptScope)
+                ->selectRaw(
+                    "SUM(rk.tindakan = 'pelepasan') as pelepasan_count,
+                    SUM(rk.tindakan = 'penolakan') as penolakan_count,
+                    SUM(rk.tindakan = 'perlakuan') as perlakuan_count,
+                    SUM(rk.tindakan = 'pemusnahan') as pemusnahan_count"
+                )
+                ->first();
+
+            $tindakanPerUpt = collect([
+                [
+                    'nama' => $scopeUptName,
+                    'pelepasan' => (int)($row->pelepasan_count ?? 0),
+                    'penolakan' => (int)($row->penolakan_count ?? 0),
+                    'perlakuan' => (int)($row->perlakuan_count ?? 0),
+                    'pemusnahan' => (int)($row->pemusnahan_count ?? 0),
+                ],
+            ]);
         }
 
         // ── Jenis Karantina (H/I/T) dari surat tugas periode ini ────────
         $jenisKarantina = collect();
-        if ($isNasional) {
-            $jenisMap = ['H' => 'Hewan', 'I' => 'Ikan', 'T' => 'Tumbuhan'];
-            $jenisKarantina = \DB::table('hasil_pemeriksaan as hp')
-                ->join('surat_tugas as st', 'hp.id_surat_tugas', '=', 'st.id')
-                ->whereBetween('hp.tgl_periksa', $dateRange)
-                ->selectRaw("st.jenis_karantina, COUNT(hp.id) as jumlah")
-                ->groupBy('st.jenis_karantina')
-                ->get()
-                ->map(fn($row) => [
-                    'jenis' => $jenisMap[$row->jenis_karantina] ?? $row->jenis_karantina,
-                    'jumlah' => $row->jumlah,
-                ]);
-        }
+        $jenisMap = ['H' => 'Hewan', 'I' => 'Ikan', 'T' => 'Tumbuhan'];
+        $jenisKarantina = DB::table('hasil_pemeriksaan as hp')
+            ->join('surat_tugas as st', 'hp.id_surat_tugas', '=', 'st.id')
+            ->whereBetween('hp.tgl_periksa', $dateRange)
+            ->when($uptScope, fn($q) => $q->whereIn('st.upt_id', $uptScope))
+            ->selectRaw("st.jenis_karantina, COUNT(hp.id) as jumlah")
+            ->groupBy('st.jenis_karantina')
+            ->get()
+            ->map(fn($row) => [
+                'jenis' => $jenisMap[$row->jenis_karantina] ?? $row->jenis_karantina,
+                'jumlah' => $row->jumlah,
+            ]);
 
         return view('pimpinan.dashboard', compact(
             'totalPemeriksaan', 'totalPelepasan', 'totalPerluTindakan', 'totalUpt',
             'rekapUpt', 'periode',
             'chartLabels', 'chartPelepasan', 'chartPerluTindakan',
-            'isNasional', 'tindakanPerKomoditas', 'tindakanPerUpt', 'jenisKarantina'
+            'isNasional', 'tindakanPerUpt', 'jenisKarantina', 'scopeUptName'
         ));
     }
 
@@ -197,13 +208,21 @@ class PimpinanController extends Controller
      */
     public function monitoringDetail(string $id): View
     {
-        $hasil = HasilPemeriksaan::with([
+        $uptScope = $this->uptScope();
+
+        $query = HasilPemeriksaan::with([
             'petugas:id,nama,nip,upt_id',
             'suratTugas.lokasi',
             'suratTugas.komoditas',
             'dokumentasi',
             'rekomendasi.koordinator:id,nama,nip',
-        ])->findOrFail($id);
+        ]);
+
+        if ($uptScope) {
+            $query->whereHas('suratTugas', fn($q) => $q->whereIn('upt_id', $uptScope));
+        }
+
+        $hasil = $query->findOrFail($id);
 
         return view('pimpinan.monitoring-detail', compact('hasil'));
     }
@@ -399,4 +418,5 @@ class PimpinanController extends Controller
             default   => [today()->startOfDay(), today()->endOfDay()],
         };
     }
+
 }

@@ -34,22 +34,22 @@ class DummyBBKHITDKISeeder extends Seeder
         }
 
         // ── Ambil user DKI Jakarta ────────────────────────────────────
-        $koordinator = User::where('email', 'koordinator.dki@qofficer.barantin.go.id')->first();
-        $pimpinan    = User::where('email', 'pimpinan@qofficer.barantin.go.id')->first();
+        $koordinator = User::where('nip', '198008222005042003')->first();
+        $pimpinan    = User::where('nip', '197506152000041002')->first();
 
         if (! $koordinator || ! $pimpinan) {
             $this->command->error('❌ User koordinator/pimpinan DKI tidak ditemukan. Jalankan UserSeeder terlebih dahulu.');
             return;
         }
 
-        $petugasList = User::whereIn('email', [
-            'petugas1.dki@qofficer.barantin.go.id',
-            'petugas2.dki@qofficer.barantin.go.id',
-            'petugas3.dki@qofficer.barantin.go.id',
-            'petugas4.dki@qofficer.barantin.go.id',
-            'petugas5.dki@qofficer.barantin.go.id',
-            'petugas6.dki@qofficer.barantin.go.id',
-            'petugas7.dki@qofficer.barantin.go.id',
+        $petugasList = User::whereIn('nip', [
+            '199503152018041004',
+            '199609052019042005',
+            '199607102019041010',
+            '199704252019042011',
+            '199812032020041012',
+            '199806142021042013',
+            '199901282022041014',
         ])->get();
 
         if ($petugasList->count() < 2) {
@@ -243,7 +243,7 @@ class DummyBBKHITDKISeeder extends Seeder
                 'perihal'            => $def['perihal'],
                 'dasar_hukum'        => 'Undang-Undang Nomor 21 Tahun 2019 tentang Karantina Hewan, Ikan, dan Tumbuhan; Peraturan Pemerintah Nomor 29 Tahun 2023 tentang Penyelenggaraan Karantina.',
                 'nama_penandatangan' => 'Dr. Budi Santoso, M.Si',
-                'nip_penandatangan'  => '197500000002',
+                'nip_penandatangan'  => '197506152000041002',
                 'status'             => $def['status'],
                 'jenis_karantina'    => $def['jk'],
                 'koordinator_id'     => $koordinator->id,

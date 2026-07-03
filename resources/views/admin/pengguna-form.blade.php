@@ -22,6 +22,13 @@
             <i class="bi bi-building"></i><span>UPT</span>
         </a>
     </li>
+
+    <li class="nav-item">
+        <a href="{{ route('admin.log-sistem') }}" data-label="Log Sistem"
+            class="nav-link {{ request()->routeIs('admin.log-sistem') ? 'active' : '' }}">
+            <i class="bi bi-journal-text"></i><span>Log Sistem</span>
+        </a>
+    </li>
     <li class="nav-item">
         <a href="{{ route('admin.profil') }}" data-label="Profil"
             class="nav-link {{ request()->routeIs('admin.profil') ? 'active' : '' }}">
@@ -58,6 +65,7 @@
         .pw-field-wrap .form-control {
             padding-right: 2.4rem;
         }
+
     </style>
 @endpush
 
@@ -159,7 +167,7 @@
                         <div class="col-sm-6">
                             <label class="form-label">Role <span class="text-danger">*</span></label>
                             <select name="role_id" class="form-select @error('role_id') is-invalid @enderror" required>
-                                <option value="">— Pilih Role —</option>
+                                <option value="">- Pilih Role -</option>
                                 @foreach ($roles as $role)
                                     <option value="{{ $role->id }}"
                                         {{ old('role_id', $user->role_id ?? '') == $role->id ? 'selected' : '' }}>
@@ -172,12 +180,9 @@
                             @enderror
                         </div>
                         <div class="col-sm-6">
-                            <label class="form-label">UPT
-                                <span class="text-muted" style="font-size:.75rem;font-weight:400">(opsional untuk Super
-                                    Admin)</span>
-                            </label>
+                            <label class="form-label">UPT</label>
                             <select name="upt_id" id="uptSelectForm" class="form-select @error('upt_id') is-invalid @enderror">
-                                <option value="">— Pilih UPT —</option>
+                                <option value="">- Pilih UPT -</option>
                                 @foreach ($uptList as $upt)
                                     <option value="{{ $upt->kode }}"
                                         {{ old('upt_id', $user->upt_id ?? '') == $upt->kode ? 'selected' : '' }}>
@@ -188,6 +193,7 @@
                             @error('upt_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <div class="form-text" style="font-size:.75rem">Opsional untuk Super Admin dan Pimpinan nasional.</div>
                         </div>
                     </div>
                 </div>
@@ -198,7 +204,7 @@
                         <h6>
                             Password
                             @if (isset($user))
-                                <span class="fw-normal text-muted" style="font-size:.8rem">— kosongkan jika tidak
+                                <span class="fw-normal text-muted" style="font-size:.8rem">- kosongkan jika tidak
                                     diubah</span>
                             @endif
                         </h6>
@@ -229,6 +235,11 @@
                                 </button>
                             </div>
                         </div>
+                    </div>
+                    <div class="alert alert-light border mt-3 mb-0" style="font-size:.78rem;color:#4b5563">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Jika password diisi atau direset oleh admin, pengguna wajib mengganti password saat login dan
+                        masa berlakunya dihitung selama 30 hari.
                     </div>
                 </div>
             </div>
@@ -282,21 +293,5 @@
             });
         });
 
-        // Initialize Select2 for UPT dropdown
-        document.addEventListener('DOMContentLoaded', function() {
-            $('#uptSelectForm').select2({
-                placeholder: 'Cari UPT...',
-                allowClear: true,
-                width: '100%',
-                language: {
-                    searching: function() {
-                        return 'Mencari...';
-                    },
-                    noResults: function() {
-                        return 'Tidak ada hasil';
-                    }
-                }
-            });
-        });
     </script>
 @endpush

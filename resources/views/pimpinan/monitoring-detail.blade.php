@@ -24,6 +24,12 @@
             <i class="bi bi-download"></i><span>Ekspor Data</span>
         </a>
     </li>
+    <li class="nav-item">
+        <a href="{{ route('pimpinan.keamanan') }}" data-label="Keamanan Akun"
+            class="nav-link {{ request()->routeIs('pimpinan.keamanan') ? 'active' : '' }}">
+            <i class="bi bi-key-fill"></i><span>Keamanan Akun</span>
+        </a>
+    </li>
 @endsection
 
 @push('styles')
@@ -155,7 +161,7 @@
                                         data-src="{{ asset('storage/' . $foto->foto_path) }}">
                                 @else
                                     <div class="d-flex align-items-center justify-content-center rounded"
-                                        style="height:140px;background:#f5f0ed;border:2px dashed #d1d5db">
+                                        style="height:140px;background:#eef5f7;border:2px dashed var(--border)">
                                         <span class="text-muted" style="font-size:.75rem">Lokal</span>
                                     </div>
                                 @endif

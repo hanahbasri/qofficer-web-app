@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\PasswordPolicyService;
+use App\Support\SystemLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -56,7 +58,21 @@ class AuthWebController extends Controller
 
         $request->session()->regenerate();
 
-        return $this->redirectByRole($user->getRoleName());
+        if ($user->hasRole('super-admin')) {
+            $user->loadMissing('role');
+
+            SystemLogService::recordForUser(
+                $request,
+                $user,
+                'autentikasi',
+                'login',
+                'Login ke dashboard super admin.',
+                $user,
+                ['role' => $user->role?->display_name]
+            );
+        }
+
+        return $this->redirectByRole($user);
     }
 
     /**
@@ -64,6 +80,22 @@ class AuthWebController extends Controller
      */
     public function logout(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+
+        if ($user?->hasRole('super-admin')) {
+            $user->loadMissing('role');
+
+            SystemLogService::recordForUser(
+                $request,
+                $user,
+                'autentikasi',
+                'logout',
+                'Logout dari dashboard super admin.',
+                $user,
+                ['role' => $user->role?->display_name]
+            );
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -71,8 +103,28 @@ class AuthWebController extends Controller
         return redirect()->route('login');
     }
 
-    private function redirectByRole(?string $role): RedirectResponse
+    private function redirectByRole(User $user): RedirectResponse
     {
+        $role = $user->getRoleName();
+
+        if ($user->needsPasswordChange()) {
+            return match ($role) {
+                'koordinator-upt' => redirect()
+                    ->route('koordinator.keamanan')
+                    ->with('warning', PasswordPolicyService::refreshMessage($user)),
+                'pimpinan' => redirect()
+                    ->route('pimpinan.keamanan')
+                    ->with('warning', PasswordPolicyService::refreshMessage($user)),
+                'super-admin' => redirect()
+                    ->route('admin.profil')
+                    ->with('warning', PasswordPolicyService::refreshMessage($user)),
+                default => $this->denyAccess(
+                    'Password akun Anda perlu diperbarui. Silakan gunakan kanal yang didukung untuk mengganti password.',
+                    $role
+                ),
+            };
+        }
+
         return match ($role) {
             'koordinator-upt' => redirect()->route('koordinator.dashboard'),
             'super-admin'     => redirect()->route('admin.pengguna'),

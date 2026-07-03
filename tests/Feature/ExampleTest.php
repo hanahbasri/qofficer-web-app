@@ -8,14 +8,14 @@ use Tests\TestCase;
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * Root URL redirects to the Q-Officer login page.
      *
      * @return void
      */
-    public function test_the_application_returns_a_successful_response()
+    public function test_root_redirects_to_login()
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertRedirect(route('login'));
     }
 }

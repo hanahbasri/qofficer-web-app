@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Q-Officer System') — Barantin</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo_apk.png') }}">
+    <title>@yield('title', 'Q-Officer System') - Barantin</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
@@ -171,14 +172,21 @@
         .sidebar-logo-icon {
             width: 34px;
             height: 34px;
-            background: var(--gold);
+            background: #fff;
             border-radius: .5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: .95rem;
-            color: var(--primary);
+            padding: 3px;
             flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
         }
 
         .sidebar-logo-text strong {
@@ -519,7 +527,7 @@
             border: 1.5px solid var(--border);
             color: var(--text-muted);
             background: transparent;
-            padding: .4rem 1rem;
+            padding: .45rem 1.15rem;
         }
 
         .btn-ghost:hover {
@@ -813,6 +821,81 @@
                 padding: 1rem;
             }
         }
+
+        /* ─── Pagination ─────────────────────────────────────────── */
+        .pagination-info {
+            font-size: .78rem;
+            color: var(--text-muted);
+        }
+
+        .pagination-info strong {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .pagination-links {
+            display: inline-flex;
+            align-items: center;
+            gap: .2rem;
+        }
+
+        .page-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2rem;
+            height: 2rem;
+            padding: .25rem .55rem;
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: .45rem;
+            text-decoration: none;
+            transition: background .15s, color .15s, border-color .15s;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        a.page-btn:hover {
+            background: var(--bg);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            font-weight: 700;
+            cursor: default;
+        }
+
+        .page-btn.disabled {
+            opacity: .35;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .page-btn.dots {
+            border: none;
+            background: transparent;
+            cursor: default;
+            min-width: 1.5rem;
+            padding: .25rem .3rem;
+            color: var(--text-muted);
+        }
+
+        .page-btn i {
+            font-size: .7rem;
+        }
+
+        @media (max-width: 576px) {
+            .pagination-info {
+                display: none;
+            }
+        }
     </style>
 
     <!-- Select2 CSS for searchable dropdowns -->
@@ -881,7 +964,7 @@
     <nav id="sidebar">
         <div class="sidebar-logo">
             <div class="sidebar-logo-icon">
-                <i class="bi bi-shield-fill-check"></i>
+                <img src="{{ asset('images/logo_apk.png') }}" alt="Q-Officer">
             </div>
             <div class="sidebar-logo-text">
                 <strong>Q-Officer</strong>
@@ -936,7 +1019,7 @@
 
     {{-- Content --}}
     <main id="main-content">
-        @if (session('success'))
+        @if (session('success') && !trim($__env->yieldContent('suppress-success-alert')))
             <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -948,11 +1031,19 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
+        @if (session('warning') && !trim($__env->yieldContent('suppress-warning-alert')))
+            <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('warning') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
 
         @yield('content')
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         // Auto-dismiss alerts after 5s
         document.querySelectorAll('.alert.alert-dismissible').forEach(function(el) {

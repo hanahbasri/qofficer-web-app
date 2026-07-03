@@ -35,7 +35,7 @@ class SuratTugas extends Model
     public function petugas()
     {
         return $this->belongsToMany(User::class, 'surat_tugas_petugas', 'surat_tugas_id', 'petugas_id')
-            ->withPivot(['status_penerimaan', 'diterima_at'])
+            ->withPivot(['status_penerimaan', 'diterima_at', 'berangkat_at'])
             ->withTimestamps();
     }
 

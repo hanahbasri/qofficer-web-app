@@ -22,6 +22,13 @@
             <i class="bi bi-building"></i><span>UPT</span>
         </a>
     </li>
+
+    <li class="nav-item">
+        <a href="{{ route('admin.log-sistem') }}" data-label="Log Sistem"
+            class="nav-link {{ request()->routeIs('admin.log-sistem') ? 'active' : '' }}">
+            <i class="bi bi-journal-text"></i><span>Log Sistem</span>
+        </a>
+    </li>
     <li class="nav-item">
         <a href="{{ route('admin.profil') }}" data-label="Profil"
             class="nav-link {{ request()->routeIs('admin.profil') ? 'active' : '' }}">
@@ -65,7 +72,7 @@
                 <div style="font-size:.8rem;opacity:.75;margin-top:.3rem">{{ $user->nip }}</div>
                 <div class="d-flex align-items-center gap-2 mt-2">
                     <span class="badge" style="background:rgba(255,255,255,.2);color:#fff;font-size:.75rem">
-                        <i class="bi bi-shield-check me-1"></i>{{ $user->role?->display_name ?? '—' }}
+                        <i class="bi bi-shield-check me-1"></i>{{ $user->role?->display_name ?? '-' }}
                     </span>
                     <span class="badge" style="background:rgba(255,255,255,.15);color:#fff;font-size:.75rem">
                         <i class="bi bi-building me-1"></i>{{ $user->upt?->short_name ?? 'Kantor Pusat' }}
@@ -132,7 +139,7 @@
                     <div class="section-divider">
                         <div class="bar"></div>
                         <h6>Ubah Password
-                            <span class="fw-normal text-muted" style="font-size:.78rem">— kosongkan jika tidak diubah</span>
+                            <span class="fw-normal text-muted" style="font-size:.78rem">- kosongkan jika tidak diubah</span>
                         </h6>
                     </div>
                     <div class="row g-3">
@@ -175,11 +182,11 @@
                         </div>
                         <div>
                             <div class="info-label mb-1">Bergabung sejak</div>
-                            <span style="font-size:.83rem;color:var(--text)">{{ $user->created_at?->format('d M Y') ?? '—' }}</span>
+                            <span style="font-size:.83rem;color:var(--text)">{{ $user->created_at?->format('d M Y') ?? '-' }}</span>
                         </div>
                         <div>
                             <div class="info-label mb-1">Terakhir diperbarui</div>
-                            <span style="font-size:.83rem;color:var(--text)">{{ $user->updated_at?->diffForHumans() ?? '—' }}</span>
+                            <span style="font-size:.83rem;color:var(--text)">{{ $user->updated_at?->diffForHumans() ?? '-' }}</span>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-brand w-100">

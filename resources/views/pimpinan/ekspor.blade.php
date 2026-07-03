@@ -2,6 +2,7 @@
 
 @section('title', 'Unduh Laporan Pemeriksaan')
 @section('page-title', 'Unduh Laporan')
+@section('suppress-warning-alert', '1')
 
 @section('sidebar-menu')
     <li class="nav-item">
@@ -12,6 +13,12 @@
     <li class="nav-item">
         <a href="{{ route('pimpinan.ekspor') }}" data-label="Unduh Laporan" class="nav-link active">
             <i class="bi bi-download"></i><span>Unduh Laporan</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('pimpinan.keamanan') }}" data-label="Keamanan Akun"
+            class="nav-link {{ request()->routeIs('pimpinan.keamanan') ? 'active' : '' }}">
+            <i class="bi bi-key-fill"></i><span>Keamanan Akun</span>
         </a>
     </li>
 @endsection
@@ -118,14 +125,24 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: .5rem;
-            padding: 1rem;
-            font-size: .875rem;
-            border-radius: .5rem;
+            gap: .28rem;
+            padding: .7rem .85rem;
+            font-size: .8rem;
+            line-height: 1.25;
+            border-radius: .75rem !important;
+            min-height: 88px;
+        }
+
+        .download-btn-group .btn i {
+            font-size: 1rem !important;
+        }
+
+        .download-btn-group .btn > span:nth-child(2) {
+            font-weight: 700;
         }
 
         .download-btn-group .btn-label {
-            font-size: .7rem;
+            font-size: .66rem;
             opacity: .75;
             font-weight: 400;
         }
@@ -314,7 +331,7 @@
             <div class="mb-4">
                 <label class="form-label fw-semibold" style="font-size:.85rem">Periode Cepat</label>
                 <div class="d-flex gap-2 flex-wrap">
-                    <button type="button" class="quick-filter-btn active" data-periodo="hari_ini">
+                    <button type="button" class="quick-filter-btn" data-periodo="hari_ini">
                         <i class="bi bi-calendar-day me-1"></i>Hari Ini
                     </button>
                     <button type="button" class="quick-filter-btn" data-periodo="7_hari">
@@ -504,6 +521,13 @@
             setTimeout(dismissToast, 6000);
         }
 
+        function formatDateLocal(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
         // Quick Filter Buttons
         document.querySelectorAll('.quick-filter-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -511,6 +535,7 @@
                 const today = new Date();
                 const dariInput = document.getElementById('dariFilter');
                 const sampaiInput = document.getElementById('sampaiFilter');
+                const form = document.getElementById('filterForm');
 
                 // Remove active class from all buttons
                 document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
@@ -518,19 +543,22 @@
 
                 // Set dates based on selection
                 if (periodo === 'hari_ini') {
-                    const dateStr = today.toISOString().split('T')[0];
+                    const dateStr = formatDateLocal(today);
                     dariInput.value = dateStr;
                     sampaiInput.value = dateStr;
+                    form.submit();
                 } else if (periodo === '7_hari') {
                     const sevenDaysAgo = new Date(today);
                     sevenDaysAgo.setDate(today.getDate() - 7);
-                    dariInput.value = sevenDaysAgo.toISOString().split('T')[0];
-                    sampaiInput.value = today.toISOString().split('T')[0];
+                    dariInput.value = formatDateLocal(sevenDaysAgo);
+                    sampaiInput.value = formatDateLocal(today);
+                    form.submit();
                 } else if (periodo === '1_bulan') {
                     const oneMonthAgo = new Date(today);
                     oneMonthAgo.setMonth(today.getMonth() - 1);
-                    dariInput.value = oneMonthAgo.toISOString().split('T')[0];
-                    sampaiInput.value = today.toISOString().split('T')[0];
+                    dariInput.value = formatDateLocal(oneMonthAgo);
+                    sampaiInput.value = formatDateLocal(today);
+                    form.submit();
                 } else if (periodo === 'custom') {
                     dariInput.value = '';
                     sampaiInput.value = '';
@@ -604,10 +632,29 @@
             const dariVal = document.getElementById('dariFilter').value;
             const sampaiVal = document.getElementById('sampaiFilter').value;
 
-            if (!dariVal && !sampaiVal) {
-                document.querySelector('[data-periodo="hari_ini"]').classList.add('active');
-            } else if (dariVal && sampaiVal) {
-                document.querySelector('[data-periodo="custom"]').classList.add('active');
+            document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+
+            if (dariVal && sampaiVal) {
+                const today = new Date();
+                const todayStr = formatDateLocal(today);
+
+                const sevenDaysAgo = new Date(today);
+                sevenDaysAgo.setDate(today.getDate() - 7);
+                const sevenDaysAgoStr = formatDateLocal(sevenDaysAgo);
+
+                const oneMonthAgo = new Date(today);
+                oneMonthAgo.setMonth(today.getMonth() - 1);
+                const oneMonthAgoStr = formatDateLocal(oneMonthAgo);
+
+                if (dariVal === todayStr && sampaiVal === todayStr) {
+                    document.querySelector('[data-periodo="hari_ini"]')?.classList.add('active');
+                } else if (dariVal === sevenDaysAgoStr && sampaiVal === todayStr) {
+                    document.querySelector('[data-periodo="7_hari"]')?.classList.add('active');
+                } else if (dariVal === oneMonthAgoStr && sampaiVal === todayStr) {
+                    document.querySelector('[data-periodo="1_bulan"]')?.classList.add('active');
+                } else {
+                    document.querySelector('[data-periodo="custom"]')?.classList.add('active');
+                }
             }
         });
     </script>

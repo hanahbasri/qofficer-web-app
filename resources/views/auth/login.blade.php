@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Masuk — Q-Officer System</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo_apk.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -40,7 +41,7 @@
                 url('/images/pemeriksaan-karantina.jpg') center center / cover no-repeat;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: flex-start;
             padding: 2.5rem 2.75rem;
             position: relative;
@@ -123,8 +124,52 @@
             animation: fadeSlideUp .6s ease both;
         }
 
+        /* ── BRAND HEADER (institusional) ── */
+        .brand-top {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            animation: fadeSlideUp .6s ease both;
+        }
+
+        .brand-top .brand-chip {
+            background: #fff;
+            border-radius: .65rem;
+            padding: .4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+        }
+
+        .brand-top .brand-chip img {
+            height: 34px;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .brand-top .brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .brand-top .brand-text strong {
+            color: #fff;
+            font-size: .92rem;
+            font-weight: 800;
+        }
+
+        .brand-top .brand-text span {
+            color: rgba(255, 255, 255, .68);
+            font-size: .7rem;
+            font-weight: 500;
+        }
+
         /* ── LEFT TEXT ── */
         .left-content {
+            margin-bottom: 7vh;
             animation: fadeSlideUp .9s ease .1s both;
         }
 
@@ -212,18 +257,31 @@
             animation: fadeSlideUp .7s ease .15s both;
         }
 
-        .login-card .card-logo {
-            width: 42px;
-            height: 42px;
-            background: linear-gradient(135deg, var(--q-teal), var(--q-teal2));
-            border-radius: .75rem;
+        .login-card .card-brand {
             display: flex;
             align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 1.2rem;
-            margin-bottom: .9rem;
-            box-shadow: 0 6px 16px rgba(11, 40, 51, .28);
+            gap: .6rem;
+            margin-bottom: 1.35rem;
+        }
+
+        .login-card .card-brand img {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .login-card .card-brand .wordmark {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--q-teal);
+            letter-spacing: .01em;
+            line-height: 1;
+        }
+
+        .login-card .card-brand .wordmark .sys {
+            color: #9ca3af;
+            font-weight: 600;
         }
 
         .login-card h2 {
@@ -419,19 +477,22 @@
     {{-- LEFT PANEL --}}
     <div class="login-left d-none d-lg-flex flex-column">
         <div class="deco-circle deco-1"></div>
-        <div class="deco-circle deco-2"></div>
-        <div class="deco-circle deco-3"></div>
+
+        <div class="brand-top">
+            <div class="brand-chip">
+                <img src="{{ asset('images/logo_barantin.png') }}" alt="Badan Karantina Indonesia">
+            </div>
+            <div class="brand-text">
+                <strong>Badan Karantina Indonesia</strong>
+                <span>Pusat Data dan Sistem Informasi</span>
+            </div>
+        </div>
 
         <div class="left-content">
-            <div class="photo-badge">
-                <i class="bi bi-building-check"></i>
-                BARANTIN · PDSI
-            </div>
-            <h1>Q-Officer<br><span>System</span></h1>
+            <h1>Q-Officer <span>System</span></h1>
             <p>
                 Sistem Informasi Pemeriksaan Kesehatan<br>
-                Karantina Hewan, Ikan &amp; Tumbuhan<br>
-                Badan Karantina Indonesia
+                Karantina Hewan, Ikan &amp; Tumbuhan
             </p>
             <div class="feature-list">
                 <div class="feature-item">
@@ -457,8 +518,9 @@
     {{-- RIGHT PANEL --}}
     <div class="login-right">
         <div class="login-card">
-            <div class="card-logo">
-                <i class="bi bi-shield-fill-check"></i>
+            <div class="card-brand">
+                <img src="{{ asset('images/logo_apk.png') }}" alt="Q-Officer">
+                <span class="wordmark">Q-Officer <span class="sys">System</span></span>
             </div>
             <h2>Selamat Datang</h2>
             <p class="subtitle">Masuk dengan username dan kata sandi Anda</p>
@@ -494,13 +556,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <div class="recaptcha-wrap">
-                        <div class="g-recaptcha"
-                            data-sitekey="{{ env('RECAPTCHA_SITE_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI') }}">
+                @php($recaptchaSiteKey = env('RECAPTCHA_SITE_KEY'))
+                @if ($recaptchaSiteKey && $recaptchaSiteKey !== '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI')
+                    <div class="mb-3">
+                        <div class="recaptcha-wrap">
+                            <div class="g-recaptcha" data-sitekey="{{ $recaptchaSiteKey }}"></div>
                         </div>
                     </div>
-                </div>
+                @endif
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="remember" id="remember">
@@ -513,7 +576,7 @@
             </form>
 
             <div class="footer-note">
-                Q-Officer v1.0 &copy; 2026 Barantin &mdash; PDSI
+                Q-Officer v1.0 &copy; 2026 Badan Karantina Indonesia
             </div>
         </div>
     </div>
@@ -640,7 +703,9 @@
     @endif
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    @if (env('RECAPTCHA_SITE_KEY') && env('RECAPTCHA_SITE_KEY') !== '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI')
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    @endif
     <script>
         // ── Show/hide password ──────────────────────────────
         const pwToggle = document.getElementById('pwToggle');

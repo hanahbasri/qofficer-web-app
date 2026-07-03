@@ -71,20 +71,6 @@ class NotifikasiController extends Controller
             'body'        => 'required|string',
         ]);
 
-        $petugas = User::whereIn('id', $request->petugas_ids)
-            ->whereNotNull('fcm_token')
-            ->pluck('fcm_token')
-            ->all();
-
-        if (empty($petugas)) {
-            return response()->json(['message' => 'Tidak ada perangkat terdaftar untuk menerima notifikasi.']);
-        }
-
-        $hasil = $this->sendFcm($petugas, $request->title, $request->body, [
-            'type'  => 'st_baru',
-            'st_id' => $request->st_id,
-        ]);
-
         // Simpan ke tabel notifikasi
         foreach ($request->petugas_ids as $petugasId) {
             Notifikasi::create([
@@ -95,6 +81,23 @@ class NotifikasiController extends Controller
                 'referensi_id' => $request->st_id,
             ]);
         }
+
+        $petugas = User::whereIn('id', $request->petugas_ids)
+            ->whereNotNull('fcm_token')
+            ->pluck('fcm_token')
+            ->all();
+
+        if (empty($petugas)) {
+            return response()->json([
+                'message' => 'Riwayat notifikasi tersimpan, tetapi belum ada perangkat terdaftar untuk menerima push notification.',
+                'fcm_result' => ['simulated' => false, 'tokens' => 0],
+            ]);
+        }
+
+        $hasil = $this->sendFcm($petugas, $request->title, $request->body, [
+            'type'  => 'st_baru',
+            'st_id' => $request->st_id,
+        ]);
 
         return response()->json(['message' => 'Notifikasi dikirim.', 'fcm_result' => $hasil]);
     }

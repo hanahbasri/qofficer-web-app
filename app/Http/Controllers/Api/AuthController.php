@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\PasswordPolicyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -43,24 +44,8 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user'  => [
-                'id'          => $user->id,
-                'nip'         => $user->nip,
-                'nama'        => $user->nama,
-                'email'       => $user->email,
-                'golongan'    => $user->golongan,
-                'pangkat'     => $user->pangkat,
-                'foto_profil' => $user->foto_profil,
-                'upt'         => $user->upt ? [
-                    'kode'    => $user->upt->kode,
-                    'nama'    => $user->upt->nama,
-                    'wilayah' => $user->upt->wilayah,
-                ] : null,
-                'role' => $user->role ? [
-                    'name'         => $user->role->name,
-                    'display_name' => $user->role->display_name,
-                ] : null,
-            ],
+            'user'  => $this->buildUserPayload($user),
+            'password_policy' => PasswordPolicyService::buildStatus($user),
         ]);
     }
 
@@ -86,6 +71,49 @@ class AuthController extends Controller
         return response()->json(['message' => 'FCM token diperbarui.']);
     }
 
+    public function me(Request $request): JsonResponse
+    {
+        $user = $request->user()->loadMissing('role', 'upt');
+
+        return response()->json([
+            'user' => $this->buildUserPayload($user),
+            'password_policy' => PasswordPolicyService::buildStatus($user),
+        ]);
+    }
+
+    /**
+     * Ganti password user yang sedang login.
+     */
+    public function gantiPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check((string) $request->input('current_password'), (string) $user->password)) {
+            return response()->json(['message' => 'Password saat ini tidak sesuai.'], 422);
+        }
+
+        if (Hash::check((string) $request->input('password'), (string) $user->password)) {
+            return response()->json(['message' => 'Password baru harus berbeda dari password saat ini.'], 422);
+        }
+
+        $user->update(PasswordPolicyService::managedPasswordData(
+            (string) $request->input('password'),
+            false
+        ));
+        $user->loadMissing('role', 'upt');
+
+        return response()->json([
+            'message' => 'Password berhasil diubah. Masa berlaku password diperpanjang 30 hari ke depan.',
+            'user' => $this->buildUserPayload($user),
+            'password_policy' => PasswordPolicyService::buildStatus($user),
+        ]);
+    }
+
     /**
      * Upload foto profil (FR-P30)
      */
@@ -103,5 +131,30 @@ class AuthController extends Controller
             'message'     => 'Foto profil diperbarui.',
             'foto_profil' => $path,
         ]);
+    }
+
+    private function buildUserPayload(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'nip' => $user->nip,
+            'nama' => $user->nama,
+            'email' => $user->email,
+            'golongan' => $user->golongan,
+            'pangkat' => $user->pangkat,
+            'foto_profil' => $user->foto_profil,
+            'must_change_password' => (bool) $user->must_change_password,
+            'password_expires_at' => $user->password_expires_at?->toISOString(),
+            'password_expired' => $user->isPasswordExpired(),
+            'upt' => $user->upt ? [
+                'kode' => $user->upt->kode,
+                'nama' => $user->upt->nama,
+                'wilayah' => $user->upt->wilayah,
+            ] : null,
+            'role' => $user->role ? [
+                'name' => $user->role->name,
+                'display_name' => $user->role->display_name,
+            ] : null,
+        ];
     }
 }

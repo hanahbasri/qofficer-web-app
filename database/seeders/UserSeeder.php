@@ -3,33 +3,52 @@
 namespace Database\Seeders;
 
 use App\Models\Role;
+use App\Models\Upt;
 use App\Models\User;
+use App\Support\PasswordPolicyService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
+    /** Pool nama untuk generator staf UPT. */
+    private const FIRST_M = [
+        'Agus', 'Budi', 'Andi', 'Rizki', 'Fajar', 'Hendra', 'Dwi', 'Eko', 'Bayu', 'Yoga',
+        'Irfan', 'Wahyu', 'Teguh', 'Rahmat', 'Dedi', 'Arif', 'Gunawan', 'Hadi', 'Joko', 'Slamet',
+        'Bagus', 'Faisal', 'Rudi', 'Taufik', 'Yusuf',
+    ];
+    private const FIRST_F = [
+        'Siti', 'Dewi', 'Rina', 'Ayu', 'Putri', 'Nur', 'Indah', 'Sri', 'Fitri', 'Wulan',
+        'Ratna', 'Lestari', 'Maya', 'Dian', 'Anisa', 'Rahma', 'Yuni', 'Citra', 'Novi', 'Intan',
+        'Mega', 'Sari', 'Vina', 'Wati', 'Tari',
+    ];
+    private const LAST = [
+        'Santoso', 'Wijaya', 'Pratama', 'Nugroho', 'Saputra', 'Hidayat', 'Kurniawan', 'Halim',
+        'Setiawan', 'Permana', 'Utomo', 'Firmansyah', 'Ramadhan', 'Maulana', 'Anggraini', 'Puspita',
+        'Handayani', 'Wibowo', 'Purnama', 'Cahyani', 'Kusuma', 'Mahendra', 'Syahputra', 'Oktaviani',
+    ];
+
     public function run(): void
     {
         $roles = Role::pluck('id', 'name');
+        $usedEmails = [];
 
+        // ── User eksplisit (dipertahankan agar DummyBBKHITDKISeeder tetap valid) ──
         $users = [
             // Super Admin
             [
-                'nip'      => '199000000001',
+                'nip'      => '199001152015041001',
                 'nama'     => 'Super Admin Sistem',
-                'email'    => 'admin@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => null,
                 'role_id'  => $roles['super-admin'],
                 'is_active'=> true,
             ],
             // ── PIMPINAN KANTOR PUSAT (NASIONAL) ──
-            // Kepala Badan
             [
-                'nip'      => '196500000081',
+                'nip'      => '196507201990031081',
                 'nama'     => 'Dr. H. Susilo Bambang Yudhoyono, M.Sc.',
-                'email'    => 'kepala.badan@karantinaindonesia.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '1000',
                 'role_id'  => $roles['pimpinan'],
@@ -37,11 +56,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pembina Utama',
                 'is_active'=> true,
             ],
-            // Sekretariat Utama
             [
-                'nip'      => '196800000082',
+                'nip'      => '196805101993031082',
                 'nama'     => 'Dr. Ir. Bambang Setiawan, M.M.',
-                'email'    => 'sekretariat.utama@karantinaindonesia.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '1000',
                 'role_id'  => $roles['pimpinan'],
@@ -49,11 +66,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pembina Tingkat I',
                 'is_active'=> true,
             ],
-            // Deputi Karantina Hewan
             [
-                'nip'      => '196200000083',
+                'nip'      => '196203251988021083',
                 'nama'     => 'Prof. Dr. Slamet Wijaya Kusuma, S.V., M.V.Sc.',
-                'email'    => 'deputi.hewan@karantinaindonesia.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '1000',
                 'role_id'  => $roles['pimpinan'],
@@ -61,11 +76,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pembina Tingkat I',
                 'is_active'=> true,
             ],
-            // Deputi Karantina Ikan
             [
-                'nip'      => '196405000084',
+                'nip'      => '196405121990032084',
                 'nama'     => 'Dr. Ir. Rahma Handayani, M.P.',
-                'email'    => 'deputi.ikan@karantinaindonesia.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '1000',
                 'role_id'  => $roles['pimpinan'],
@@ -73,11 +86,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pembina Tingkat I',
                 'is_active'=> true,
             ],
-            // Deputi Karantina Tumbuhan
             [
-                'nip'      => '196610000085',
+                'nip'      => '196610081992032085',
                 'nama'     => 'Dr. Ir. Eka Wardhani, M.Si.',
-                'email'    => 'deputi.tumbuhan@karantinaindonesia.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '1000',
                 'role_id'  => $roles['pimpinan'],
@@ -85,22 +96,18 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pembina Tingkat I',
                 'is_active'=> true,
             ],
-            // ── PIMPINAN UPT (BALAI) ──
-            // Pimpinan DKI
+            // ── BBKHIT DKI JAKARTA (3100) — staf eksplisit ──
             [
-                'nip'      => '197500000002',
+                'nip'      => '197506152000041002',
                 'nama'     => 'Dr. Budi Santoso, M.Si',
-                'email'    => 'pimpinan@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['pimpinan'],
                 'is_active'=> true,
             ],
-            // Koordinator UPT DKI
             [
-                'nip'      => '198000000003',
+                'nip'      => '198008222005042003',
                 'nama'     => 'Sari Dewi, S.P.',
-                'email'    => 'koordinator.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['koordinator-upt'],
@@ -108,11 +115,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Penata',
                 'is_active'=> true,
             ],
-            // Petugas Lapangan 1 — DKI
             [
-                'nip'      => '199500000004',
+                'nip'      => '199503152018041004',
                 'nama'     => 'Ahmad Fauzi, A.Md.',
-                'email'    => 'petugas1.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -120,11 +125,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur Tk.I',
                 'is_active'=> true,
             ],
-            // Petugas Lapangan 2 — DKI
             [
-                'nip'      => '199600000005',
+                'nip'      => '199609052019042005',
                 'nama'     => 'Rina Marlina, A.Md.',
-                'email'    => 'petugas2.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -132,36 +135,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur',
                 'is_active'=> true,
             ],
-            // Koordinator UPT Surabaya
             [
-                'nip'      => '198200000006',
-                'nama'     => 'Hendra Wijaya, S.P.',
-                'email'    => 'koordinator.sby@qofficer.barantin.go.id',
-                'password' => Hash::make('password'),
-                'upt_id'   => '3500',
-                'role_id'  => $roles['koordinator-upt'],
-                'golongan' => 'III/b',
-                'pangkat'  => 'Penata Muda Tk.I',
-                'is_active'=> true,
-            ],
-            // Petugas Lapangan — Surabaya
-            [
-                'nip'      => '199800000007',
-                'nama'     => 'Dian Pratiwi, A.Md.',
-                'email'    => 'petugas1.sby@qofficer.barantin.go.id',
-                'password' => Hash::make('password'),
-                'upt_id'   => '3500',
-                'role_id'  => $roles['petugas-lapangan'],
-                'golongan' => 'II/b',
-                'pangkat'  => 'Pengatur Muda Tk.I',
-                'is_active'=> true,
-            ],
-            // ── PETUGAS LAPANGAN BBKHIT DKI JAKARTA (Tambahan) ──
-            // Petugas 3 — DKI
-            [
-                'nip'      => '199700000010',
+                'nip'      => '199607102019041010',
                 'nama'     => 'Bambang Sutrisno, A.Md.',
-                'email'    => 'petugas3.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -169,11 +145,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur Tk.I',
                 'is_active'=> true,
             ],
-            // Petugas 4 — DKI
             [
-                'nip'      => '199800000011',
+                'nip'      => '199704252019042011',
                 'nama'     => 'Sri Handayani, S.P.',
-                'email'    => 'petugas4.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -181,11 +155,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur',
                 'is_active'=> true,
             ],
-            // Petugas 5 — DKI
             [
-                'nip'      => '199900000012',
+                'nip'      => '199812032020041012',
                 'nama'     => 'Dwi Hermawan, A.Md.',
-                'email'    => 'petugas5.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -193,11 +165,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur Muda Tk.I',
                 'is_active'=> true,
             ],
-            // Petugas 6 — DKI
             [
-                'nip'      => '200000000013',
+                'nip'      => '199806142021042013',
                 'nama'     => 'Nurul Azizah, A.Md.',
-                'email'    => 'petugas6.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -205,11 +175,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur Tk.I',
                 'is_active'=> true,
             ],
-            // Petugas 7 — DKI
             [
-                'nip'      => '200100000014',
+                'nip'      => '199901282022041014',
                 'nama'     => 'Yudi Prasetyo, A.Md.',
-                'email'    => 'petugas7.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -217,11 +185,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur',
                 'is_active'=> true,
             ],
-            // Petugas 8 — DKI
             [
-                'nip'      => '200200000015',
+                'nip'      => '199908092022042015',
                 'nama'     => 'Linda Suryatni, S.P.',
-                'email'    => 'petugas8.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -229,11 +195,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur Muda Tk.I',
                 'is_active'=> true,
             ],
-            // Petugas 9 — DKI
             [
-                'nip'      => '200300000016',
+                'nip'      => '200003172023041016',
                 'nama'     => 'Rexon Adrianto, A.Md.',
-                'email'    => 'petugas9.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -241,11 +205,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur Tk.I',
                 'is_active'=> true,
             ],
-            // Petugas 10 — DKI
             [
-                'nip'      => '200400000017',
+                'nip'      => '200005222023042017',
                 'nama'     => 'Siti Nursyamsi, A.Md.',
-                'email'    => 'petugas10.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -253,11 +215,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur',
                 'is_active'=> true,
             ],
-            // Petugas 11 — DKI
             [
-                'nip'      => '200500000018',
+                'nip'      => '200102112024041018',
                 'nama'     => 'Supratno Wijaya, S.P.',
-                'email'    => 'petugas11.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -265,11 +225,9 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur Muda Tk.I',
                 'is_active'=> true,
             ],
-            // Petugas 12 — DKI
             [
-                'nip'      => '200600000019',
+                'nip'      => '200109062024042019',
                 'nama'     => 'Riza Puspitasari, A.Md.',
-                'email'    => 'petugas12.dki@qofficer.barantin.go.id',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
                 'role_id'  => $roles['petugas-lapangan'],
@@ -280,7 +238,121 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $userData) {
-            User::firstOrCreate(['nip' => $userData['nip']], $userData);
+            $this->persistUser($userData, $usedEmails);
         }
+
+        // ── Generator: setiap UPT balai induk (kode berakhiran '00') diberi
+        //    1 pimpinan + 1 koordinator + 3 petugas lapangan.
+        //    Dikecualikan: '1000' (Kantor Pusat) dan '3100' (sudah eksplisit di atas).
+        $indukUpt = Upt::where('kode', 'like', '%00')
+            ->whereNotIn('kode', ['1000', '3100'])
+            ->orderBy('kode')
+            ->pluck('kode');
+
+        $seq = 100;     // nomor urut global NIP generated (hindari bentrok 001–085)
+        $nameIdx = 0;   // penunjuk pool nama
+
+        foreach ($indukUpt as $kode) {
+            $this->persistUser($this->makeStaff($kode, 'pimpinan', $roles, $seq, $nameIdx), $usedEmails);
+            $this->persistUser($this->makeStaff($kode, 'koordinator-upt', $roles, $seq, $nameIdx), $usedEmails);
+            for ($i = 0; $i < 3; $i++) {
+                $this->persistUser($this->makeStaff($kode, 'petugas-lapangan', $roles, $seq, $nameIdx), $usedEmails);
+            }
+        }
+    }
+
+    /** Simpan satu user (lengkapi email + kebijakan password). */
+    private function persistUser(array $userData, array &$usedEmails): void
+    {
+        $userData['email'] = $this->generateEmailFromName($userData['nama'], $usedEmails);
+        $userData['password'] = $userData['password'] ?? Hash::make('password');
+        $userData['must_change_password'] = $userData['must_change_password'] ?? false;
+        $userData['password_changed_at'] = $userData['password_changed_at'] ?? now();
+        $userData['password_expires_at'] = $userData['password_expires_at']
+            ?? now()->addDays(PasswordPolicyService::EXPIRY_DAYS);
+
+        User::updateOrCreate(['nip' => $userData['nip']], $userData);
+    }
+
+    /** Bangun data staf UPT hasil generate (nama, NIP, golongan sesuai role). */
+    private function makeStaff(string $uptKode, string $roleName, $roles, int &$seq, int &$nameIdx): array
+    {
+        $isMale = ($nameIdx % 2 === 0);
+        $first  = $isMale
+            ? self::FIRST_M[intdiv($nameIdx, 2) % count(self::FIRST_M)]
+            : self::FIRST_F[intdiv($nameIdx, 2) % count(self::FIRST_F)];
+        $last   = self::LAST[($nameIdx * 3) % count(self::LAST)];
+        $gender = $isMale ? '1' : '2';
+        $nameIdx++;
+
+        if ($roleName === 'pimpinan') {
+            $birthYear = 1971 + ($seq % 6);
+            $cpnsYear  = $birthYear + 26;
+            $golongan  = 'IV/b';
+            $pangkat   = 'Pembina Tingkat I';
+            $gelar     = 'M.Si';
+        } elseif ($roleName === 'koordinator-upt') {
+            $birthYear = 1983 + ($seq % 5);
+            $cpnsYear  = $birthYear + 25;
+            $golongan  = 'III/c';
+            $pangkat   = 'Penata';
+            $gelar     = 'S.P.';
+        } else {
+            $birthYear = 1995 + ($seq % 5);
+            $cpnsYear  = $birthYear + 23;
+            $golongan  = 'II/c';
+            $pangkat   = 'Pengatur';
+            $gelar     = 'A.Md.';
+        }
+
+        return [
+            'nip'      => $this->makeNip($birthYear, $cpnsYear, $gender, $seq),
+            'nama'     => "{$first} {$last}, {$gelar}",
+            'password' => Hash::make('password'),
+            'upt_id'   => $uptKode,
+            'role_id'  => $roles[$roleName],
+            'golongan' => $golongan,
+            'pangkat'  => $pangkat,
+            'is_active'=> true,
+        ];
+    }
+
+    /**
+     * Bangun NIP 18 digit valid: YYYYMMDD(lahir) + YYYYMM(CPNS) + G(1/2) + NNN(urut).
+     * $seq dipakai sebagai nomor urut global sekaligus variasi tanggal lahir.
+     */
+    private function makeNip(int $birthYear, int $cpnsYear, string $gender, int &$seq): string
+    {
+        $month = str_pad((string) (($seq % 12) + 1), 2, '0', STR_PAD_LEFT);
+        $day   = str_pad((string) (($seq % 28) + 1), 2, '0', STR_PAD_LEFT);
+        $urut  = str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
+        $seq++;
+
+        return sprintf('%04d%s%s%04d04%s%s', $birthYear, $month, $day, $cpnsYear, $gender, $urut);
+    }
+
+    private function generateEmailFromName(string $nama, array &$usedEmails): string
+    {
+        $baseName = trim(Str::before($nama, ','));
+        $baseName = preg_replace('/^(?:(?:prof|drh|dr|ir|h|hj)\.?\s+)+/i', '', $baseName) ?? $baseName;
+        $baseName = Str::of($baseName)
+            ->ascii()
+            ->lower()
+            ->replaceMatches('/[^a-z0-9]+/', '.')
+            ->trim('.')
+            ->value();
+
+        $localPart = $baseName !== '' ? $baseName : 'user';
+        $email = $localPart . '@karantinaindonesia.go.id';
+        $suffix = 2;
+
+        while (in_array($email, $usedEmails, true)) {
+            $email = $localPart . $suffix . '@karantinaindonesia.go.id';
+            $suffix++;
+        }
+
+        $usedEmails[] = $email;
+
+        return $email;
     }
 }

@@ -24,7 +24,37 @@
             <i class="bi bi-download"></i><span>Unduh Laporan</span>
         </a>
     </li>
+    <li class="nav-item">
+        <a href="{{ route('pimpinan.keamanan') }}" data-label="Keamanan Akun"
+            class="nav-link {{ request()->routeIs('pimpinan.keamanan') ? 'active' : '' }}">
+            <i class="bi bi-key-fill"></i><span>Keamanan Akun</span>
+        </a>
+    </li>
 @endsection
+
+@push('styles')
+<style>
+    .ptg-chips { display:flex; flex-wrap:wrap; gap:.2rem; }
+    .ptg-chip {
+        background:#eef5f7; color:var(--primary-mid);
+        border-radius:.3rem; padding:.1em .5em;
+        font-size:.69rem; font-weight:600; white-space:nowrap;
+    }
+    .st-no { font-weight:700; font-size:.84rem; color:var(--primary); letter-spacing:.02em; }
+    .st-jenis-badge { background:rgba(19,49,57,.09); color:var(--primary); }
+    .table tbody tr td { vertical-align:middle; }
+    .tbl-date small { display:block; font-size:.7rem; color:var(--text-muted); margin-top:.08rem; }
+    .col-info-strip {
+        background:#f4f7f8;
+        border: 1px solid var(--border);
+        border-radius:.5rem;
+        padding:.55rem 1rem;
+        display:flex; align-items:center; gap:.6rem;
+        font-size:.78rem; color:var(--text-muted);
+        margin-bottom:1rem;
+    }
+</style>
+@endpush
 
 @section('content')
 <div class="page-heading">
@@ -70,6 +100,13 @@
 </div>
 
 {{-- Tabel --}}
+<div class="col-info-strip">
+    <i class="bi bi-table"></i>
+    <span>Total <strong>{{ $stList->total() }}</strong> penugasan ditemukan</span>
+    @if(request()->hasAny(['upt','status']))
+        <span class="ms-1" style="color:var(--primary);font-weight:600">&mdash; filter aktif</span>
+    @endif
+</div>
 <div class="card">
     <div class="table-responsive">
         <table class="table mb-0 align-middle">
@@ -88,22 +125,33 @@
                 @forelse($stList as $st)
                 <tr>
                     <td>
-                        <span class="fw-bold" style="font-size:.83rem;color:var(--primary)">{{ $st->no_st }}</span>
+                        <span class="st-no">{{ $st->no_st }}</span>
                     </td>
-                    <td style="font-size:.8rem;max-width:180px">
-                        <div class="fw-semibold" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                    <td style="font-size:.8rem;max-width:170px">
+                        <div class="fw-semibold" style="color:var(--text)">
                             {{ $st->upt?->short_name ?? ($st->upt?->nama ?? $st->upt_id) }}
                         </div>
                     </td>
-                    <td style="font-size:.8rem;white-space:nowrap">{{ $st->tanggal?->format('d/m/Y') }}</td>
-                    <td style="font-size:.82rem;max-width:220px">{{ Str::limit($st->perihal, 50) }}</td>
+                    <td class="tbl-date">
+                        {{ $st->tanggal?->format('d M Y') }}
+                        <small>{{ $st->tanggal?->format('l') }}</small>
+                    </td>
+                    <td style="font-size:.82rem;max-width:230px" title="{{ $st->perihal }}">{{ Str::limit($st->perihal, 55) }}</td>
                     <td>
-                        <span class="badge" style="background:rgba(19,49,57,.1);color:var(--primary)">
+                        <span class="badge st-jenis-badge">
                             {{ ['H'=>'Hewan','T'=>'Tumbuhan','I'=>'Ikan'][$st->jenis_karantina] ?? '-' }}
                         </span>
                     </td>
-                    <td style="font-size:.8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                        {{ $st->petugas->pluck('nama')->implode(', ') ?: '—' }}
+                    <td style="max-width:180px">
+                        @if($st->petugas->isEmpty())
+                            <span class="text-muted" style="font-size:.78rem">—</span>
+                        @else
+                            <div class="ptg-chips">
+                                @foreach($st->petugas as $ptg)
+                                    <span class="ptg-chip">{{ $ptg->nama }}</span>
+                                @endforeach
+                            </div>
+                        @endif
                     </td>
                     <td>
                         @php

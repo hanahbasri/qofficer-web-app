@@ -41,4 +41,10 @@ return [
         'url' => env('BEST_TRUST_URL'),
     ],
 
+    // ESPS Karantina Indonesia API
+    'esps' => [
+        'base_url'   => env('ESPS_BASE_URL', 'https://esps.karantinaindonesia.go.id/api-officer'),
+        'auth_token' => env('ESPS_AUTH_TOKEN'),
+    ],
+
 ];

@@ -15,6 +15,7 @@ class User extends Authenticatable
         'nip', 'nama', 'email', 'password',
         'upt_id', 'role_id', 'is_active',
         'foto_profil', 'golongan', 'pangkat', 'fcm_token',
+        'must_change_password', 'password_changed_at', 'password_expires_at',
     ];
 
     protected $hidden = [
@@ -23,6 +24,9 @@ class User extends Authenticatable
 
     protected $casts = [
         'is_active' => 'boolean',
+        'must_change_password' => 'boolean',
+        'password_changed_at' => 'datetime',
+        'password_expires_at' => 'datetime',
     ];
 
     // ── Relationships ────────────────────────────────────────────
@@ -58,6 +62,11 @@ class User extends Authenticatable
         return $this->hasMany(Notifikasi::class);
     }
 
+    public function systemLogs()
+    {
+        return $this->hasMany(SystemLog::class);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────
     public function hasRole(string $roleName): bool
     {
@@ -67,5 +76,15 @@ class User extends Authenticatable
     public function getRoleName(): ?string
     {
         return $this->role?->name;
+    }
+
+    public function isPasswordExpired(): bool
+    {
+        return $this->password_expires_at?->isPast() ?? false;
+    }
+
+    public function needsPasswordChange(): bool
+    {
+        return $this->must_change_password || $this->isPasswordExpired();
     }
 }
