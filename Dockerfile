@@ -17,5 +17,10 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction \
     && mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Railway menyuntik $PORT. Migrasi + seed (sekali) lalu jalankan server.
-CMD php artisan migrate --force --seed && php artisan serve --host 0.0.0.0 --port ${PORT:-8080}
+# Izinkan built-in server PHP melayani banyak request sekaligus (bukan 1 per waktu)
+ENV PHP_CLI_SERVER_WORKERS=8
+
+# Railway menyuntik $PORT. Migrasi + seed lalu jalankan server.
+# Pakai ';' bukan '&&' supaya serve tetap jalan walau seed sudah pernah sukses.
+CMD php artisan migrate --force --seed --no-interaction; \
+    php artisan serve --host 0.0.0.0 --port ${PORT:-8080}
