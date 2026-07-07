@@ -11,6 +11,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
+# Cache-bust: ubah nilai ini tiap kali mau paksa Railway rebuild total dari sini.
+ENV APP_BUILD=20260707c
+
 # Salin kode & install dependency (vendor dibuat fresh, tidak dari repo)
 COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction \
