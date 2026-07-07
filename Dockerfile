@@ -25,8 +25,8 @@ ENV PHP_CLI_SERVER_WORKERS=8
 # supaya Console bisa dipakai & error aslinya kelihatan.
 CMD sh -c "\
     echo '>>> PORT yang dipakai: '\${PORT:-8080} ; \
-    php artisan migrate --force --seed --no-interaction ; \
-    echo '>>> Seeding selesai, menjalankan serve...' ; \
+    php artisan migrate --force --no-interaction ; \
+    echo '>>> Migrasi selesai (seed dilewati, DB sudah terisi), menjalankan serve...' ; \
     php artisan serve --host 0.0.0.0 --port \${PORT:-8080} ; \
     echo '>>> SERVE EXIT dengan kode: '\$? ; \
     echo '>>> Container dijaga hidup 1 jam untuk debug...' ; \
