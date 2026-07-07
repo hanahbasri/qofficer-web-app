@@ -21,6 +21,13 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction \
 ENV PHP_CLI_SERVER_WORKERS=8
 
 # Railway menyuntik $PORT. Migrasi + seed lalu jalankan server.
-# Pakai ';' bukan '&&' supaya serve tetap jalan walau seed sudah pernah sukses.
-CMD php artisan migrate --force --seed --no-interaction; \
-    php artisan serve --host 0.0.0.0 --port ${PORT:-8080}
+# DIAGNOSTIK: kalau serve mati, cetak kode exit-nya lalu jaga container tetap hidup
+# supaya Console bisa dipakai & error aslinya kelihatan.
+CMD sh -c "\
+    echo '>>> PORT yang dipakai: '\${PORT:-8080} ; \
+    php artisan migrate --force --seed --no-interaction ; \
+    echo '>>> Seeding selesai, menjalankan serve...' ; \
+    php artisan serve --host 0.0.0.0 --port \${PORT:-8080} ; \
+    echo '>>> SERVE EXIT dengan kode: '\$? ; \
+    echo '>>> Container dijaga hidup 1 jam untuk debug...' ; \
+    sleep 3600"
