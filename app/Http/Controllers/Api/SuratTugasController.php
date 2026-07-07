@@ -116,11 +116,13 @@ class SuratTugasController extends Controller
         // Update penerimaan petugas + status ST dalam satu transaksi atomik.
         // Bila salah satu gagal, keduanya di-rollback agar tidak terjadi
         // kondisi tidak sinkron (pivot 'diterima' tetapi ST belum 'aktif').
-        DB::transaction(function () use ($id, $user) {
-            // Update pivot
+        DB::transaction(function () use ($id) {
+            // Auto-terima untuk SELURUH anggota tim yang belum menerima.
+            // Konsep tim: begitu satu petugas menerima, tugas otomatis aktif
+            // untuk semua petugas dalam surat tugas yang sama.
             DB::table('surat_tugas_petugas')
                 ->where('surat_tugas_id', $id)
-                ->where('petugas_id', $user->id)
+                ->where('status_penerimaan', 'tertunda')
                 ->update([
                     'status_penerimaan' => 'diterima',
                     'diterima_at'       => now(),
@@ -283,7 +285,13 @@ class SuratTugasController extends Controller
      */
     public function riwayatKoordinator(Request $request): JsonResponse
     {
-        $stList = SuratTugas::with(['lokasi', 'komoditas', 'petugas:id,nama,nip'])
+        $stList = SuratTugas::with([
+                'lokasi',
+                'komoditas',
+                'petugas:id,nama,nip',
+                'hasilPemeriksaan:id,id_surat_tugas,id_petugas,tgl_periksa',
+                'hasilPemeriksaan.petugas:id,nama',
+            ])
             ->where('koordinator_id', $request->user()->id)
             ->orderByDesc('tanggal')
             ->paginate(20);

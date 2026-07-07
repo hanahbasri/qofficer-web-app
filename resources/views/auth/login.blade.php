@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masuk — Q-Officer System</title>
+    <title>Masuk — Q-Officer</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo_apk.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
@@ -489,7 +489,7 @@
         </div>
 
         <div class="left-content">
-            <h1>Q-Officer <span>System</span></h1>
+            <h1>Q-Officer</h1>
             <p>
                 Sistem Informasi Pemeriksaan Kesehatan<br>
                 Karantina Hewan, Ikan &amp; Tumbuhan
@@ -520,7 +520,7 @@
         <div class="login-card">
             <div class="card-brand">
                 <img src="{{ asset('images/logo_apk.png') }}" alt="Q-Officer">
-                <span class="wordmark">Q-Officer <span class="sys">System</span></span>
+                <span class="wordmark">Q-Officer</span>
             </div>
             <h2>Selamat Datang</h2>
             <p class="subtitle">Masuk dengan username dan kata sandi Anda</p>

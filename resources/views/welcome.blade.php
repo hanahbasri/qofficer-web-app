@@ -262,7 +262,7 @@
 <main class="shell">
     <section>
         <div class="badge-row">
-            <div class="badge">Q-Officer System · Web Dashboard</div>
+            <div class="badge">Q-Officer · Web Dashboard</div>
             <div class="role-pill">Super Admin · Koordinator UPT · Pimpinan</div>
         </div>
 
@@ -315,7 +315,7 @@
         </div>
 
         <footer>
-            <span>Q-Officer System — Sistem Informasi Pemeriksaan Kesehatan Badan Karantina Indonesia</span>
+            <span>Q-Officer — Sistem Informasi Pemeriksaan Kesehatan Badan Karantina Indonesia</span>
             <span>Laravel v{{ Illuminate\Foundation\Application::VERSION }} · PHP v{{ PHP_VERSION }}</span>
         </footer>
     </section>

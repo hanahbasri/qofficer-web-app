@@ -39,8 +39,17 @@ class KoordinatorController extends Controller
             ->limit(5)
             ->get();
 
+        // Penugasan yang sedang berjalan (informasi ringkas di dashboard).
+        // Tracking detail tetap dilakukan di aplikasi mobile.
+        $penugasanAktif = SuratTugas::with('petugas:id,nama')
+            ->whereIn('status', ['aktif', 'dikirim'])
+            ->where('upt_id', $uptId)
+            ->orderByDesc('tanggal')
+            ->limit(5)
+            ->get();
+
         return view('koordinator.dashboard', compact(
-            'stAktif', 'stSelesaiHari', 'menungguReview', 'petugasAktif', 'hasilMenunggu'
+            'stAktif', 'stSelesaiHari', 'menungguReview', 'petugasAktif', 'hasilMenunggu', 'penugasanAktif'
         ));
     }
 
@@ -113,39 +122,58 @@ class KoordinatorController extends Controller
             ->values();
 
         // Log aktivitas gabungan, diurutkan kronologis
+        $logEvents = $this->buildLogEvents($st, $hasil->id);
+
+        // Status selesai per petugas (sudah submit hasil = selesai)
+        $petugasSelesaiIds = $st->hasilPemeriksaan->pluck('id_petugas')->unique();
+
+        return view('koordinator.hasil-periksa-detail', compact(
+            'hasil', 'st', 'gpsPoints', 'logEvents', 'petugasSelesaiIds'
+        ));
+    }
+
+    /**
+     * Bangun timeline aktivitas (terima → berangkat → periksa → selesai)
+     * dari sebuah surat tugas. $activeHasilId menandai hasil yang sedang dibuka.
+     */
+    private function buildLogEvents(SuratTugas $st, ?string $activeHasilId = null)
+    {
         $logEvents = collect();
+
         foreach ($st->petugas as $ptg) {
             $pvt = $ptg->pivot;
             if ($pvt->diterima_at) {
                 $logEvents->push([
-                    'type'    => 'terima',
-                    'at'      => \Carbon\Carbon::parse($pvt->diterima_at),
-                    'nama'    => $ptg->nama,
-                    'lat'     => null,
-                    'long'    => null,
+                    'type' => 'terima',
+                    'at'   => \Carbon\Carbon::parse($pvt->diterima_at),
+                    'nama' => $ptg->nama,
+                    'lat'  => null,
+                    'long' => null,
                 ]);
             }
             if ($pvt->berangkat_at) {
                 $logEvents->push([
-                    'type'    => 'berangkat',
-                    'at'      => \Carbon\Carbon::parse($pvt->berangkat_at),
-                    'nama'    => $ptg->nama,
-                    'lat'     => null,
-                    'long'    => null,
+                    'type' => 'berangkat',
+                    'at'   => \Carbon\Carbon::parse($pvt->berangkat_at),
+                    'nama' => $ptg->nama,
+                    'lat'  => null,
+                    'long' => null,
                 ]);
             }
         }
+
         foreach ($st->hasilPemeriksaan as $hp) {
             $logEvents->push([
-                'type'    => 'periksa',
-                'at'      => $hp->tgl_periksa,
-                'nama'    => $hp->petugas?->nama,
-                'lat'     => $hp->lat,
-                'long'    => $hp->long,
-                'hp_id'   => $hp->id,
-                'active'  => $hp->id === $hasil->id,
+                'type'   => 'periksa',
+                'at'     => $hp->tgl_periksa,
+                'nama'   => $hp->petugas?->nama,
+                'lat'    => $hp->lat,
+                'long'   => $hp->long,
+                'hp_id'  => $hp->id,
+                'active' => $activeHasilId !== null && $hp->id === $activeHasilId,
             ]);
         }
+
         if ($st->status === 'selesai') {
             $logEvents->push([
                 'type' => 'selesai',
@@ -155,14 +183,8 @@ class KoordinatorController extends Controller
                 'long' => null,
             ]);
         }
-        $logEvents = $logEvents->sortBy('at')->values();
 
-        // Status selesai per petugas (sudah submit hasil = selesai)
-        $petugasSelesaiIds = $st->hasilPemeriksaan->pluck('id_petugas')->unique();
-
-        return view('koordinator.hasil-periksa-detail', compact(
-            'hasil', 'st', 'gpsPoints', 'logEvents', 'petugasSelesaiIds'
-        ));
+        return $logEvents->sortBy('at')->values();
     }
 
     /**
@@ -179,8 +201,17 @@ class KoordinatorController extends Controller
         $user = Auth::user();
 
         // Pastikan data dari UPT koordinator sendiri (FR-W05)
-        $hasil = HasilPemeriksaan::whereHas('suratTugas', fn($q) => $q->where('upt_id', $user->upt_id))
+        $hasil = HasilPemeriksaan::with('suratTugas')
+            ->whereHas('suratTugas', fn($q) => $q->where('upt_id', $user->upt_id))
             ->findOrFail($request->id_hasil_pemeriksaan);
+
+        // Rekomendasi hanya boleh diberikan setelah surat tugas diselesaikan
+        // oleh petugas (semua lokasi sudah diperiksa).
+        if ($hasil->suratTugas?->status !== 'selesai') {
+            return redirect()
+                ->route('koordinator.hasil-periksa.detail', $hasil->id)
+                ->with('error', 'Rekomendasi belum dapat diberikan karena surat tugas belum diselesaikan oleh petugas.');
+        }
 
         // Buat atau update rekomendasi
         $rekomendasi = RekomendasiKarantina::updateOrCreate(

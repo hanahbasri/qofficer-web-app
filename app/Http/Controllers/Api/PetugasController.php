@@ -21,7 +21,7 @@ class PetugasController extends Controller
             ->where('upt_id', $uptId)
             ->where('is_active', true)
             ->whereHas('role', fn($q) => $q->where('name', 'petugas-lapangan'))
-            ->select('id', 'nip', 'nama', 'golongan', 'pangkat', 'foto_profil', 'upt_id')
+            ->select('id', 'nip', 'nama', 'golongan', 'pangkat', 'jabatan', 'foto_profil', 'upt_id')
             ->get();
 
         return response()->json(['data' => $petugas]);
@@ -35,7 +35,7 @@ class PetugasController extends Controller
         $petugas = User::with('upt')
             ->where('id', $id)
             ->whereHas('role', fn($q) => $q->where('name', 'petugas-lapangan'))
-            ->select('id', 'nip', 'nama', 'golongan', 'pangkat', 'foto_profil', 'upt_id')
+            ->select('id', 'nip', 'nama', 'golongan', 'pangkat', 'jabatan', 'foto_profil', 'upt_id')
             ->firstOrFail();
 
         return response()->json(['data' => $petugas]);

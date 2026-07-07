@@ -1,0 +1,18 @@
+# ──────────────────────────────────────────────────────────────────
+# Root .htaccess untuk shared hosting (InfinityFree, cPanel, dll)
+# yang document root-nya tidak bisa diarahkan ke folder public/.
+#
+# Semua request dialihkan ke public/ sehingga index.php Laravel
+# tetap menjadi front controller, dan file sensitif (.env, app/,
+# vendor/, dst) tidak dapat diakses langsung dari browser.
+#
+# Catatan: file ini diabaikan saat `php artisan serve` (dev lokal),
+# jadi tidak mengganggu pengembangan.
+# ──────────────────────────────────────────────────────────────────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Jangan alihkan request yang sudah menuju public/ (hindari public/public/)
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

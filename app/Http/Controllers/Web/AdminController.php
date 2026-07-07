@@ -101,6 +101,7 @@ class AdminController extends Controller
             'role_id'   => $data['role_id'],
             'golongan'  => $data['golongan'],
             'pangkat'   => $data['pangkat'],
+            'jabatan'   => $data['jabatan'] ?? null,
             'is_active' => $data['is_active'],
         ]);
 
@@ -603,6 +604,7 @@ class AdminController extends Controller
             ],
             'golongan' => ['nullable', 'string', 'max:10'],
             'pangkat' => ['nullable', 'string', 'max:100'],
+            'jabatan' => ['nullable', 'string', 'max:255'],
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
         ]);
     }

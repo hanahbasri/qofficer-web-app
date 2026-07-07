@@ -23,6 +23,12 @@
         </a>
     </li>
     <li class="nav-item">
+        <a href="{{ route('koordinator.profil') }}" data-label="Profil"
+            class="nav-link {{ request()->routeIs('koordinator.profil') ? 'active' : '' }}">
+            <i class="bi bi-person-circle"></i><span>Profil Saya</span>
+        </a>
+    </li>
+    <li class="nav-item">
         <a href="{{ route('koordinator.keamanan') }}" data-label="Keamanan Akun"
             class="nav-link {{ request()->routeIs('koordinator.keamanan') ? 'active' : '' }}">
             <i class="bi bi-key-fill"></i><span>Keamanan Akun</span>
@@ -431,6 +437,41 @@
     </div>
 </div>
 
+{{-- Penugasan Sedang Berjalan (informasi ringkas; tracking detail di mobile) --}}
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="info-card">
+            <div class="sec-head mb-3">
+                <div class="sec-head-bar" style="background:#2e7d32"></div>
+                <h6 class="sec-head-title" style="color:var(--primary)">Penugasan Sedang Berjalan</h6>
+                <span class="badge badge-status-aktif ms-auto">{{ $penugasanAktif->count() }} aktif</span>
+            </div>
+            @forelse($penugasanAktif as $st)
+                <div class="d-flex align-items-center gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                    <div style="width:36px;height:36px;border-radius:10px;background:rgba(46,125,50,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <i class="bi bi-geo-alt-fill" style="color:#2e7d32"></i>
+                    </div>
+                    <div class="flex-grow-1" style="min-width:0">
+                        <div class="fw-semibold" style="font-size:.85rem;color:var(--primary)">{{ $st->no_st }}</div>
+                        <div class="text-muted text-truncate" style="font-size:.76rem">{{ $st->perihal }}</div>
+                    </div>
+                    <div class="text-end" style="flex-shrink:0">
+                        <div style="font-size:.78rem">{{ $st->petugas->count() }} petugas</div>
+                        <div class="text-muted" style="font-size:.72rem">{{ \Carbon\Carbon::parse($st->tanggal)->format('d M Y') }}</div>
+                    </div>
+                </div>
+            @empty
+                <div class="text-muted text-center py-3" style="font-size:.82rem">
+                    <i class="bi bi-inbox"></i> Tidak ada penugasan yang sedang berjalan.
+                </div>
+            @endforelse
+            <div class="text-muted mt-2" style="font-size:.72rem">
+                <i class="bi bi-info-circle"></i> Progres detail tiap petugas dapat dipantau di aplikasi mobile.
+            </div>
+        </div>
+    </div>
+</div>
+
 
 @push('scripts')
 <style>
@@ -442,4 +483,3 @@
 @endpush
 
 @endsection
-

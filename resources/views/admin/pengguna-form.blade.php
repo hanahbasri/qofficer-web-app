@@ -155,6 +155,18 @@
                             <input type="text" name="pangkat" class="form-control"
                                 value="{{ old('pangkat', $user->pangkat ?? '') }}" placeholder="Penata" autocomplete="off">
                         </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Jabatan Fungsional
+                                <small class="text-muted">(khusus Petugas Lapangan)</small></label>
+                            <select name="jabatan" class="form-select">
+                                <option value="">— Tidak ada / bukan petugas —</option>
+                                @foreach (['Fungsional Karantina Hewan', 'Fungsional Karantina Ikan', 'Fungsional Karantina Tumbuhan'] as $jb)
+                                    <option value="{{ $jb }}" {{ old('jabatan', $user->jabatan ?? '') == $jb ? 'selected' : '' }}>
+                                        {{ $jb }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 

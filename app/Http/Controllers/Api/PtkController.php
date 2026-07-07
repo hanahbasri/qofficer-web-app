@@ -41,6 +41,8 @@ class PtkController extends Controller
                 'komoditas'        => $ptk['komoditas_ringkasan'],
                 'asal_negara'      => $ptk['asal_negara'],
                 'tujuan'           => $ptk['tujuan'],
+                'pelabuhan_muat'   => $ptk['pelabuhan_muat'],
+                'pelabuhan_bongkar'=> $ptk['pelabuhan_bongkar'],
                 'jumlah_komoditas' => count($ptk['komoditas_list']),
                 'dokumen_karantina'=> $ptk['dokumen_karantina'],
                 'status'           => $ptk['status'],
@@ -69,118 +71,100 @@ class PtkController extends Controller
 
     private function getSimulasiPtk(string $uptId): array
     {
+        // PTK simulasi hanya tersedia untuk BBKHIT DKI Jakarta (kode UPT 31xx).
+        // Koordinator UPT lain tidak menerima PTK ini.
+        if (!str_starts_with($uptId, '31')) {
+            return [];
+        }
+
         $today = now();
 
-        return [
-            [
-                'ptk_id'             => '15012EXT260211134302UISE2S',
-                'no_ptk'             => '15012EXT260211134302UISE2S',
-                'tanggal_ptk'        => $today->toDateString(),
-                'jenis_karantina'    => 'H',
-                'nama_pemohon'       => 'PT Maju Bersama',
-                'komoditas_ringkasan'=> 'Sapi Impor (15 jenis)',
-                'asal_negara'        => 'Australia',
-                'tujuan'             => 'Jakarta',
-                'dokumen_karantina'  => 'HC-2024-001',
-                'status'             => 'menunggu',
-                'komoditas_list'     => $this->dummyKomoditasHewan($uptId, '260211001'),
-            ],
-            [
-                'ptk_id'             => '15012EXT2602091226270KGI7S',
-                'no_ptk'             => '15012EXT2602091226270KGI7S',
-                'tanggal_ptk'        => $today->copy()->subDay()->toDateString(),
-                'jenis_karantina'    => 'T',
-                'nama_pemohon'       => 'CV Agro Sejahtera',
-                'komoditas_ringkasan'=> 'Bibit/Benih Tanaman (18 jenis)',
-                'asal_negara'        => 'Thailand',
-                'tujuan'             => 'Pontianak',
-                'dokumen_karantina'  => 'PC-2024-002',
-                'status'             => 'menunggu',
-                'komoditas_list'     => $this->dummyKomoditasTumbuhan($uptId, '260209002'),
-            ],
-            [
-                'ptk_id'             => '32000IMP260207101530A9BC2D',
-                'no_ptk'             => '32000IMP260207101530A9BC2D',
-                'tanggal_ptk'        => $today->copy()->subDays(2)->toDateString(),
-                'jenis_karantina'    => 'I',
-                'nama_pemohon'       => 'PT Bahari Nusantara',
-                'komoditas_ringkasan'=> 'Udang & Ikan Impor (12 jenis)',
-                'asal_negara'        => 'Vietnam',
-                'tujuan'             => 'Surabaya',
-                'dokumen_karantina'  => 'FC-2024-003',
-                'status'             => 'menunggu',
-                'komoditas_list'     => $this->dummyKomoditasIkan($uptId, '260207003'),
-            ],
+        // Simulasi PTK Domestik Keluar (Dokel) — fokus BBKHIT DKI Jakarta.
+        // DKI sebagai titik muat (Pelabuhan Tanjung Priok): asal Jabodetabek/Jabar,
+        // tujuan kota-kota luar Jawa. Nama & data bersifat FIKTIF (dummy).
+        $defs = [
+            ['id' => '31000DKH260705A1MKS', 'jk' => 'H', 'pemohon' => 'PT Nusantara Dairy Prima', 'asal' => 'Kota Bekasi', 'tujuan' => 'Kota Makassar', 'dok' => 'KH-3100-001', 'day' => 0, 'kom' => [
+                ['nama' => 'Es Krim Aneka Rasa', 'latin' => '-', 'vol' => 500, 'sat' => 'karton'],
+            ]],
+            ['id' => '31000DKH260705A2PNK', 'jk' => 'H', 'pemohon' => 'PT Boga Unggas Sejahtera', 'asal' => 'Jakarta Utara', 'tujuan' => 'Kota Pontianak', 'dok' => 'KH-3100-002', 'day' => 0, 'kom' => [
+                ['nama' => 'Daging Ayam Beku', 'latin' => 'Gallus gallus domesticus', 'vol' => 3000, 'sat' => 'kg'],
+            ]],
+            ['id' => '31000DKT260704A3MDC', 'jk' => 'T', 'pemohon' => 'PT Segar Tani Makmur', 'asal' => 'Kota Bandung', 'tujuan' => 'Kota Manado', 'dok' => 'KT-3100-003', 'day' => 1, 'kom' => [
+                ['nama' => 'Kentang Iris Beku', 'latin' => 'Solanum tuberosum', 'vol' => 2000, 'sat' => 'kg'],
+            ]],
+            ['id' => '31000DKT260704A4PRE', 'jk' => 'T', 'pemohon' => 'PT Buah Nusantara Jaya', 'asal' => 'Kota Bogor', 'tujuan' => 'Kota Pare-Pare', 'dok' => 'KT-3100-004', 'day' => 1, 'kom' => [
+                ['nama' => 'Pir Segar',  'latin' => 'Pyrus communis',  'vol' => 1000, 'sat' => 'kg'],
+                ['nama' => 'Apel Fuji',  'latin' => 'Malus domestica', 'vol' => 1200, 'sat' => 'kg'],
+            ]],
+            ['id' => '31000DKT260703A5MMJ', 'jk' => 'T', 'pemohon' => 'CV Sumber Buah Lestari', 'asal' => 'Kota Bekasi', 'tujuan' => 'Kabupaten Mamuju', 'dok' => 'KT-3100-005', 'day' => 2, 'kom' => [
+                ['nama' => 'Jeruk',     'latin' => 'Citrus sinensis',      'vol' => 1500, 'sat' => 'kg'],
+                ['nama' => 'Kelengkeng', 'latin' => 'Dimocarpus longan',   'vol' => 700,  'sat' => 'kg'],
+            ]],
+            ['id' => '31000DKT260703A6KDI', 'jk' => 'T', 'pemohon' => 'PT Tropika Fruit Indonesia', 'asal' => 'Kota Tangerang', 'tujuan' => 'Kota Kendari', 'dok' => 'KT-3100-006', 'day' => 2, 'kom' => [
+                ['nama' => 'Belimbing (Star Fruit)', 'latin' => 'Averrhoa carambola', 'vol' => 600, 'sat' => 'kg'],
+            ]],
+            ['id' => '31000DKT260702A7BPN', 'jk' => 'T', 'pemohon' => 'PT Rimba Kayu Lestari', 'asal' => 'Kabupaten Bogor', 'tujuan' => 'Kota Balikpapan', 'dok' => 'KT-3100-007', 'day' => 3, 'kom' => [
+                ['nama' => 'Kayu Gergajian', 'latin' => 'Tectona grandis', 'vol' => 30, 'sat' => 'm3'],
+            ]],
+            ['id' => '31000DKH260702A8PLU', 'jk' => 'H', 'pemohon' => 'PT Aneka Frozen Food', 'asal' => 'Jakarta Timur', 'tujuan' => 'Kota Palu', 'dok' => 'KH-3100-008', 'day' => 3, 'kom' => [
+                ['nama' => 'Nugget Ayam Beku', 'latin' => '-', 'vol' => 1500, 'sat' => 'kg'],
+                ['nama' => 'Sosis Sapi Beku',  'latin' => '-', 'vol' => 800,  'sat' => 'kg'],
+            ]],
+            ['id' => '31000DKI260701A9SRG', 'jk' => 'I', 'pemohon' => 'PT Mina Bahari Segar', 'asal' => 'Jakarta Utara', 'tujuan' => 'Kota Sorong', 'dok' => 'KI-3100-009', 'day' => 4, 'kom' => [
+                ['nama' => 'Ikan Kembung Beku', 'latin' => 'Rastrelliger kanagurta', 'vol' => 2500, 'sat' => 'kg'],
+            ]],
+            ['id' => '31000DKI260701B1AMB', 'jk' => 'I', 'pemohon' => 'CV Laut Nusantara Jaya', 'asal' => 'Kota Bekasi', 'tujuan' => 'Kota Ambon', 'dok' => 'KI-3100-010', 'day' => 4, 'kom' => [
+                ['nama' => 'Udang Vaname Beku', 'latin' => 'Litopenaeus vannamei', 'vol' => 1200, 'sat' => 'kg'],
+            ]],
+            ['id' => '31000DKH260630B2BJM', 'jk' => 'H', 'pemohon' => 'PT Prima Telur Nusantara', 'asal' => 'Kabupaten Bogor', 'tujuan' => 'Kota Banjarmasin', 'dok' => 'KH-3100-011', 'day' => 5, 'kom' => [
+                ['nama' => 'Telur Ayam Konsumsi', 'latin' => 'Gallus gallus domesticus', 'vol' => 5000, 'sat' => 'kg'],
+            ]],
+            ['id' => '31000DKT260630B3KPG', 'jk' => 'T', 'pemohon' => 'PT Hasil Bumi Sentosa', 'asal' => 'Kota Bandung', 'tujuan' => 'Kota Kupang', 'dok' => 'KT-3100-012', 'day' => 5, 'kom' => [
+                ['nama' => 'Wortel Beku',  'latin' => 'Daucus carota',        'vol' => 1000, 'sat' => 'kg'],
+                ['nama' => 'Brokoli Beku', 'latin' => 'Brassica oleracea',    'vol' => 600,  'sat' => 'kg'],
+            ]],
         ];
-    }
 
-    /** Dummy komoditas Hewan */
-    private function dummyKomoditasHewan(string $uptId, string $seq): array
-    {
-        $items = [
-            ['nama' => 'Sapi Limousin',      'latin' => 'Bos taurus (Limousin)',      'vol' => 50,   'sat' => 'ekor'],
-            ['nama' => 'Sapi Simental',      'latin' => 'Bos taurus (Simmental)',     'vol' => 30,   'sat' => 'ekor'],
-            ['nama' => 'Sapi Brahman',       'latin' => 'Bos indicus (Brahman)',      'vol' => 20,   'sat' => 'ekor'],
-            ['nama' => 'Sapi Angus',         'latin' => 'Bos taurus (Angus)',         'vol' => 25,   'sat' => 'ekor'],
-            ['nama' => 'Sapi Hereford',      'latin' => 'Bos taurus (Hereford)',      'vol' => 15,   'sat' => 'ekor'],
-            ['nama' => 'Domba Merino',       'latin' => 'Ovis aries (Merino)',        'vol' => 100,  'sat' => 'ekor'],
-            ['nama' => 'Kambing Boer',       'latin' => 'Capra aegagrus (Boer)',      'vol' => 80,   'sat' => 'ekor'],
-            ['nama' => 'Babi Duroc',         'latin' => 'Sus scrofa domesticus',      'vol' => 200,  'sat' => 'ekor'],
-            ['nama' => 'Kuda Thoroughbred',  'latin' => 'Equus ferus caballus',       'vol' => 5,    'sat' => 'ekor'],
-            ['nama' => 'Ayam Broiler DOC',   'latin' => 'Gallus gallus domesticus',   'vol' => 5000, 'sat' => 'ekor'],
-            ['nama' => 'Ayam Petelur DOC',   'latin' => 'Gallus gallus domesticus',   'vol' => 3000, 'sat' => 'ekor'],
-            ['nama' => 'Bebek Peking',       'latin' => 'Anas platyrhynchos',         'vol' => 500,  'sat' => 'ekor'],
-            ['nama' => 'Semen Beku Sapi',    'latin' => 'Bos taurus (semen)',         'vol' => 1000, 'sat' => 'dosis'],
-            ['nama' => 'Embrio Sapi',        'latin' => 'Bos taurus (embrio)',        'vol' => 50,   'sat' => 'embrio'],
-            ['nama' => 'Daging Sapi Beku',   'latin' => 'Bos taurus (carcass)',       'vol' => 5000, 'sat' => 'kg'],
-        ];
-        return $this->buildKomoditasItems($items, 'H', $uptId, $seq);
-    }
+        return array_map(function ($d, $idx) use ($today, $uptId) {
+            $seq = '2607' . str_pad((string) ($idx + 1), 3, '0', STR_PAD_LEFT);
+            $komoditas = $this->buildKomoditasItems($d['kom'], $d['jk'], $uptId, $seq);
+            $jumlah = count($d['kom']);
+            $ringkasan = $jumlah === 1
+                ? $d['kom'][0]['nama']
+                : $d['kom'][0]['nama'] . ' +' . ($jumlah - 1) . ' lainnya';
 
-    /** Dummy komoditas Tumbuhan */
-    private function dummyKomoditasTumbuhan(string $uptId, string $seq): array
-    {
-        $items = [
-            ['nama' => 'Bibit Mangga Harum Manis', 'latin' => 'Mangifera indica',         'vol' => 500,  'sat' => 'batang'],
-            ['nama' => 'Bibit Durian Monthong',    'latin' => 'Durio zibethinus',          'vol' => 300,  'sat' => 'batang'],
-            ['nama' => 'Benih Padi Hibrida',       'latin' => 'Oryza sativa',              'vol' => 1000, 'sat' => 'kg'],
-            ['nama' => 'Benih Jagung Hibrida',     'latin' => 'Zea mays',                  'vol' => 500,  'sat' => 'kg'],
-            ['nama' => 'Benih Kedelai',            'latin' => 'Glycine max',               'vol' => 2000, 'sat' => 'kg'],
-            ['nama' => 'Bibit Alpukat Hass',       'latin' => 'Persea americana',          'vol' => 200,  'sat' => 'batang'],
-            ['nama' => 'Bibit Stroberi',           'latin' => 'Fragaria x ananassa',       'vol' => 1000, 'sat' => 'pcs'],
-            ['nama' => 'Benih Tomat Cherry',       'latin' => 'Solanum lycopersicum',      'vol' => 50,   'sat' => 'kg'],
-            ['nama' => 'Benih Paprika',            'latin' => 'Capsicum annuum',           'vol' => 20,   'sat' => 'kg'],
-            ['nama' => 'Bibit Kelapa Sawit',       'latin' => 'Elaeis guineensis',         'vol' => 5000, 'sat' => 'batang'],
-            ['nama' => 'Bibit Karet',              'latin' => 'Hevea brasiliensis',        'vol' => 2000, 'sat' => 'batang'],
-            ['nama' => 'Bibit Anggur Muscat',      'latin' => 'Vitis vinifera',            'vol' => 100,  'sat' => 'batang'],
-            ['nama' => 'Bunga Krisan',             'latin' => 'Chrysanthemum morifolium',  'vol' => 10000,'sat' => 'pot'],
-            ['nama' => 'Tanaman Hias Anthurium',   'latin' => 'Anthurium andraeanum',      'vol' => 500,  'sat' => 'pot'],
-            ['nama' => 'Benih Kentang',            'latin' => 'Solanum tuberosum',         'vol' => 3000, 'sat' => 'kg'],
-            ['nama' => 'Bibit Kopi Arabika',       'latin' => 'Coffea arabica',            'vol' => 1000, 'sat' => 'batang'],
-            ['nama' => 'Bibit Teh',                'latin' => 'Camellia sinensis',         'vol' => 800,  'sat' => 'batang'],
-            ['nama' => 'Kayu Jati',                'latin' => 'Tectona grandis',           'vol' => 10,   'sat' => 'm3'],
-        ];
-        return $this->buildKomoditasItems($items, 'T', $uptId, $seq);
-    }
+            // Pelabuhan bongkar per kota tujuan (pelabuhan muat = satpel DKI: Tanjung Priok)
+            $bongkarMap = [
+                'Kota Makassar'    => 'Pelabuhan Makassar',
+                'Kota Pontianak'   => 'Pelabuhan Dwikora Pontianak',
+                'Kota Manado'      => 'Pelabuhan Bitung',
+                'Kota Pare-Pare'   => 'Pelabuhan Nusantara Pare-Pare',
+                'Kabupaten Mamuju' => 'Pelabuhan Belang-Belang Mamuju',
+                'Kota Kendari'     => 'Pelabuhan Kendari',
+                'Kota Balikpapan'  => 'Pelabuhan Semayang Balikpapan',
+                'Kota Palu'        => 'Pelabuhan Pantoloan Palu',
+                'Kota Sorong'      => 'Pelabuhan Sorong',
+                'Kota Ambon'       => 'Pelabuhan Yos Sudarso Ambon',
+                'Kota Banjarmasin' => 'Pelabuhan Trisakti Banjarmasin',
+                'Kota Kupang'      => 'Pelabuhan Tenau Kupang',
+            ];
 
-    /** Dummy komoditas Ikan */
-    private function dummyKomoditasIkan(string $uptId, string $seq): array
-    {
-        $items = [
-            ['nama' => 'Udang Vaname',         'latin' => 'Litopenaeus vannamei',     'vol' => 5000,  'sat' => 'kg'],
-            ['nama' => 'Udang Windu',          'latin' => 'Penaeus monodon',          'vol' => 2000,  'sat' => 'kg'],
-            ['nama' => 'Ikan Salmon Atlantik', 'latin' => 'Salmo salar',              'vol' => 3000,  'sat' => 'kg'],
-            ['nama' => 'Ikan Trout Pelangi',   'latin' => 'Oncorhynchus mykiss',      'vol' => 1500,  'sat' => 'kg'],
-            ['nama' => 'Ikan Nila Gift',       'latin' => 'Oreochromis niloticus',    'vol' => 10000, 'sat' => 'ekor'],
-            ['nama' => 'Ikan Lele Sangkuriang','latin' => 'Clarias gariepinus',       'vol' => 5000,  'sat' => 'ekor'],
-            ['nama' => 'Ikan Koi',             'latin' => 'Cyprinus carpio (koi)',    'vol' => 200,   'sat' => 'ekor'],
-            ['nama' => 'Lobster Air Tawar',    'latin' => 'Cherax quadricarinatus',   'vol' => 500,   'sat' => 'ekor'],
-            ['nama' => 'Ikan Arwana Silver',   'latin' => 'Osteoglossum bicirrhosum', 'vol' => 50,    'sat' => 'ekor'],
-            ['nama' => 'Kepiting Bakau',       'latin' => 'Scylla serrata',           'vol' => 1000,  'sat' => 'kg'],
-            ['nama' => 'Kerang Mutiara',       'latin' => 'Pinctada maxima',          'vol' => 500,   'sat' => 'pcs'],
-            ['nama' => 'Benih Ikan Mas',       'latin' => 'Cyprinus carpio',          'vol' => 50000, 'sat' => 'ekor'],
-        ];
-        return $this->buildKomoditasItems($items, 'I', $uptId, $seq);
+            return [
+                'ptk_id'             => $d['id'],
+                'no_ptk'             => $d['id'],
+                'tanggal_ptk'        => $today->copy()->subDays($d['day'])->toDateString(),
+                'jenis_karantina'    => $d['jk'],
+                'nama_pemohon'       => $d['pemohon'],
+                'komoditas_ringkasan'=> $ringkasan,
+                'asal_negara'        => $d['asal'],
+                'tujuan'             => $d['tujuan'],
+                'pelabuhan_muat'     => 'Pelabuhan Tanjung Priok',
+                'pelabuhan_bongkar'  => $bongkarMap[$d['tujuan']] ?? ('Pelabuhan ' . $d['tujuan']),
+                'dokumen_karantina'  => $d['dok'],
+                'status'             => 'menunggu',
+                'komoditas_list'     => $komoditas,
+            ];
+        }, $defs, array_keys($defs));
     }
 
     private function buildKomoditasItems(array $items, string $jenis, string $uptId, string $seq): array

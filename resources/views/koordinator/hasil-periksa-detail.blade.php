@@ -16,6 +16,13 @@
     </div>
 @endif
 
+@if (session()->has('error'))
+    <div class="alert alert-warning d-flex align-items-center gap-2 m-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <div>{{ session('error') }}</div>
+    </div>
+@endif
+
 @section('sidebar-menu')
     <li class="nav-item">
         <a href="{{ route('koordinator.dashboard') }}" class="nav-link {{ request()->routeIs('koordinator.dashboard') ? 'active' : '' }}">
@@ -30,6 +37,11 @@
     <li class="nav-item">
         <a href="{{ route('koordinator.petugas') }}" class="nav-link {{ request()->routeIs('koordinator.petugas*') ? 'active' : '' }}">
             <i class="bi bi-people-fill"></i><span>Petugas</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('koordinator.profil') }}" class="nav-link {{ request()->routeIs('koordinator.profil') ? 'active' : '' }}">
+            <i class="bi bi-person-circle"></i><span>Profil Saya</span>
         </a>
     </li>
     <li class="nav-item">
@@ -705,8 +717,21 @@
                 <div class="text-muted" style="font-size:.73rem">{{ $hasil->rekomendasi->created_at?->format('d M Y, H:i') }}</div>
             </div>
         </div>
+    @elseif ($st->status !== 'selesai')
+        {{-- Surat tugas belum diselesaikan petugas: rekomendasi masih terkunci --}}
+        <div class="map-status" style="align-items:flex-start">
+            <i class="bi bi-lock-fill" style="color:#b8860b"></i>
+            <div>
+                <div style="font-weight:700;color:#33434a">Rekomendasi belum dapat diberikan</div>
+                <div style="font-size:.82rem;color:var(--text-muted);margin-top:.15rem">
+                    Menunggu petugas menyelesaikan seluruh pemeriksaan surat tugas ini
+                    (semua lokasi selesai diperiksa). Status ST saat ini:
+                    <strong>{{ ucfirst($st->status) }}</strong>.
+                </div>
+            </div>
+        </div>
     @else
-        <form method="POST" action="{{ route('koordinator.rekomendasi.simpan') }}" class="row g-3 align-items-end">
+        <form method="POST" action="{{ route('koordinator.rekomendasi.simpan') }}" class="row g-3 align-items-start">
             @csrf
             <input type="hidden" name="id_hasil_pemeriksaan" value="{{ $hasil->id }}">
             <div class="col-md-3">
@@ -726,7 +751,8 @@
                     placeholder="Jelaskan alasan rekomendasi..." required minlength="10">{{ old('catatan') }}</textarea>
                 @error('catatan')<div class="invalid-feedback small">{{ $message }}</div>@enderror
             </div>
-            <div class="col-md-2">
+            <div class="col-md-2 d-flex flex-column">
+                <label class="form-label d-none d-md-block">&nbsp;</label>
                 <button type="submit" class="btn btn-brand btn-sm w-100">
                     <i class="bi bi-check2-circle me-1"></i>Simpan
                 </button>

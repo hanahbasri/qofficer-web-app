@@ -258,15 +258,17 @@ class DummyBBKHITDKISeeder extends Seeder
                 if (! isset($petugasList[$idx])) {
                     continue;
                 }
-                $petugas     = $petugasList[$idx];
-                $diterimaTgl = date('Y-m-d H:i:s', strtotime($def['tanggal'] . ' +2 hours'));
+                $petugas      = $petugasList[$idx];
+                $diterimaTgl  = date('Y-m-d H:i:s', strtotime($def['tanggal'] . ' +2 hours'));
+                $berangkatTgl = date('Y-m-d H:i:s', strtotime($def['tanggal'] . ' +6 hours'));
                 DB::table('surat_tugas_petugas')->insert([
                     'surat_tugas_id'    => $stId,
                     'petugas_id'        => $petugas->id,
-                    'status_penerimaan' => 'diterima',
+                    'status_penerimaan' => 'berangkat',
                     'diterima_at'       => $diterimaTgl,
+                    'berangkat_at'      => $berangkatTgl,
                     'created_at'        => $diterimaTgl,
-                    'updated_at'        => $diterimaTgl,
+                    'updated_at'        => $berangkatTgl,
                 ]);
             }
 

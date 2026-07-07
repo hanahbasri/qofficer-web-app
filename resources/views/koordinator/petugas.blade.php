@@ -23,6 +23,12 @@
         </a>
     </li>
     <li class="nav-item">
+        <a href="{{ route('koordinator.profil') }}" data-label="Profil"
+            class="nav-link {{ request()->routeIs('koordinator.profil') ? 'active' : '' }}">
+            <i class="bi bi-person-circle"></i><span>Profil Saya</span>
+        </a>
+    </li>
+    <li class="nav-item">
         <a href="{{ route('koordinator.keamanan') }}" data-label="Keamanan Akun"
             class="nav-link {{ request()->routeIs('koordinator.keamanan') ? 'active' : '' }}">
             <i class="bi bi-key-fill"></i><span>Keamanan Akun</span>

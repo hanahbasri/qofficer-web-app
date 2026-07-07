@@ -14,7 +14,7 @@ class User extends Authenticatable
     protected $fillable = [
         'nip', 'nama', 'email', 'password',
         'upt_id', 'role_id', 'is_active',
-        'foto_profil', 'golongan', 'pangkat', 'fcm_token',
+        'foto_profil', 'golongan', 'pangkat', 'jabatan', 'fcm_token',
         'must_change_password', 'password_changed_at', 'password_expires_at',
     ];
 

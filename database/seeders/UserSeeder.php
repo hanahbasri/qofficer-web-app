@@ -12,6 +12,15 @@ use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
+    /** Jabatan fungsional khusus Petugas Lapangan (dipetakan ke jenis H/I/T). */
+    private const JABATAN_POOL = [
+        'Fungsional Karantina Hewan',
+        'Fungsional Karantina Ikan',
+        'Fungsional Karantina Tumbuhan',
+    ];
+    private int $jabatanIdx = 0;
+    private ?int $petugasRoleId = null;
+
     /** Pool nama untuk generator staf UPT. */
     private const FIRST_M = [
         'Agus', 'Budi', 'Andi', 'Rizki', 'Fajar', 'Hendra', 'Dwi', 'Eko', 'Bayu', 'Yoga',
@@ -32,6 +41,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $roles = Role::pluck('id', 'name');
+        $this->petugasRoleId = $roles['petugas-lapangan'] ?? null;
         $usedEmails = [];
 
         // ── User eksplisit (dipertahankan agar DummyBBKHITDKISeeder tetap valid) ──
@@ -155,14 +165,15 @@ class UserSeeder extends Seeder
                 'pangkat'  => 'Pengatur',
                 'is_active'=> true,
             ],
+            // Koordinator UPT tambahan — DKI
             [
                 'nip'      => '199812032020041012',
                 'nama'     => 'Dwi Hermawan, A.Md.',
                 'password' => Hash::make('password'),
                 'upt_id'   => '3100',
-                'role_id'  => $roles['petugas-lapangan'],
-                'golongan' => 'II/b',
-                'pangkat'  => 'Pengatur Muda Tk.I',
+                'role_id'  => $roles['koordinator-upt'],
+                'golongan' => 'III/c',
+                'pangkat'  => 'Penata',
                 'is_active'=> true,
             ],
             [
@@ -264,6 +275,16 @@ class UserSeeder extends Seeder
     /** Simpan satu user (lengkapi email + kebijakan password). */
     private function persistUser(array $userData, array &$usedEmails): void
     {
+        // Petugas lapangan diberi jabatan fungsional (H/I/T) bergiliran bila belum diisi.
+        if (
+            empty($userData['jabatan'])
+            && $this->petugasRoleId !== null
+            && ($userData['role_id'] ?? null) === $this->petugasRoleId
+        ) {
+            $userData['jabatan'] = self::JABATAN_POOL[$this->jabatanIdx % count(self::JABATAN_POOL)];
+            $this->jabatanIdx++;
+        }
+
         $userData['email'] = $this->generateEmailFromName($userData['nama'], $usedEmails);
         $userData['password'] = $userData['password'] ?? Hash::make('password');
         $userData['must_change_password'] = $userData['must_change_password'] ?? false;

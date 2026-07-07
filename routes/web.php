@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\AdminController;
+use App\Http\Controllers\Web\AccountProfileController;
 use App\Http\Controllers\Web\AuthWebController;
 use App\Http\Controllers\Web\KoordinatorController;
 use App\Http\Controllers\Web\PasswordController;
@@ -32,6 +33,8 @@ Route::prefix('qofficer')->group(function () {
 
         Route::middleware('password.fresh')->group(function () {
         Route::get('/dashboard', [KoordinatorController::class, 'dashboard'])->name('dashboard');
+        Route::get('/profil', [AccountProfileController::class, 'edit'])->name('profil');
+        Route::put('/profil', [AccountProfileController::class, 'update'])->name('profil.update');
 
         // Hasil Pemeriksaan
         Route::get('/hasil-periksa',      [KoordinatorController::class, 'hasilPeriksa'])->name('hasil-periksa');
@@ -58,6 +61,8 @@ Route::prefix('qofficer')->group(function () {
 
         Route::middleware('password.fresh')->group(function () {
         Route::get('/dashboard',           [PimpinanController::class, 'dashboard'])->name('dashboard');
+        Route::get('/profil',              [AccountProfileController::class, 'edit'])->name('profil');
+        Route::put('/profil',              [AccountProfileController::class, 'update'])->name('profil.update');
         Route::get('/monitoring',          [PimpinanController::class, 'monitoring'])->name('monitoring');
         Route::get('/monitoring/{id}',     [PimpinanController::class, 'monitoringDetail'])->name('monitoring.detail');
         Route::get('/surat-tugas',         [PimpinanController::class, 'suratTugas'])->name('surat-tugas');

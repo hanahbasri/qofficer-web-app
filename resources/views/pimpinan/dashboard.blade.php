@@ -16,6 +16,12 @@
         </a>
     </li>
     <li class="nav-item">
+        <a href="{{ route('pimpinan.profil') }}" data-label="Profil"
+            class="nav-link {{ request()->routeIs('pimpinan.profil') ? 'active' : '' }}">
+            <i class="bi bi-person-circle"></i><span>Profil Saya</span>
+        </a>
+    </li>
+    <li class="nav-item">
         <a href="{{ route('pimpinan.keamanan') }}" data-label="Keamanan Akun"
             class="nav-link {{ request()->routeIs('pimpinan.keamanan') ? 'active' : '' }}">
             <i class="bi bi-key-fill"></i><span>Keamanan Akun</span>
