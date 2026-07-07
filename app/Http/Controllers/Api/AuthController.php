@@ -8,6 +8,7 @@ use App\Support\PasswordPolicyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -22,6 +23,27 @@ class AuthController extends Controller
             'nip'      => 'required|string',
             'password' => 'required|string',
         ]);
+
+        // Verifikasi reCAPTCHA (skip jika key belum diset / test key) — sama seperti web
+        $secretKey = env('RECAPTCHA_SECRET_KEY');
+        if ($secretKey && $secretKey !== '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe') {
+            $token = $request->input('recaptcha_token');
+            if (!$token) {
+                throw ValidationException::withMessages([
+                    'nip' => ['Verifikasi keamanan (captcha) belum diselesaikan.'],
+                ]);
+            }
+            $verify = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret'   => $secretKey,
+                'response' => $token,
+                'remoteip' => $request->ip(),
+            ]);
+            if (!($verify->json('success') ?? false)) {
+                throw ValidationException::withMessages([
+                    'nip' => ['Verifikasi keamanan (captcha) gagal. Coba lagi.'],
+                ]);
+            }
+        }
 
         $user = User::with('role', 'upt')
             ->where('nip', $request->nip)

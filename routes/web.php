@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Route;
 // Redirect root ke /qofficer/login
 Route::get('/', fn() => redirect()->route('login'));
 
+// Halaman reCAPTCHA untuk aplikasi mobile (dimuat di dalam WebView).
+// Dilayani dari domain qofficer.site supaya domain-check reCAPTCHA lolos.
+Route::get('/mobile-captcha', fn() => view('mobile-captcha'))->name('mobile-captcha');
+
 // ──────────────────────────────────────────────────────────────────
 // SEMUA WEB ROUTES DI BAWAH PREFIX /qofficer
 // ──────────────────────────────────────────────────────────────────
