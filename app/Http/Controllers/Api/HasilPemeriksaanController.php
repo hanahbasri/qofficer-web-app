@@ -256,26 +256,7 @@ class HasilPemeriksaanController extends Controller
     private function kirimFcmKeUser(int $userId, string $title, string $body, array $data = []): void
     {
         $fcmToken = \App\Models\User::find($userId)?->fcm_token;
-        if (!$fcmToken) return;
-
-        $serverKey = config('services.firebase.server_key');
-        if (!$serverKey) {
-            Log::info('FCM koordinator (simulasi)', compact('title', 'body', 'data'));
-            return;
-        }
-
-        try {
-            Http::withHeaders([
-                'Authorization' => "key={$serverKey}",
-                'Content-Type'  => 'application/json',
-            ])->post('https://fcm.googleapis.com/fcm/send', [
-                'to'           => $fcmToken,
-                'notification' => ['title' => $title, 'body' => $body],
-                'data'         => $data,
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('FCM koordinator error: ' . $e->getMessage());
-        }
+        \App\Support\FcmService::send($fcmToken, $title, $body, $data);
     }
 
     /**

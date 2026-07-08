@@ -333,26 +333,7 @@ class SuratTugasController extends Controller
     private function kirimFcmKeUser(int $userId, string $title, string $body, array $data = []): void
     {
         $fcmToken = \App\Models\User::find($userId)?->fcm_token;
-        if (!$fcmToken) return;
-
-        $serverKey = config('services.firebase.server_key');
-        if (!$serverKey) {
-            \Illuminate\Support\Facades\Log::info('FCM koordinator (simulasi)', compact('title', 'body', 'data'));
-            return;
-        }
-
-        try {
-            \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => "key={$serverKey}",
-                'Content-Type'  => 'application/json',
-            ])->post('https://fcm.googleapis.com/fcm/send', [
-                'to'           => $fcmToken,
-                'notification' => ['title' => $title, 'body' => $body],
-                'data'         => $data,
-            ]);
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('FCM koordinator error: ' . $e->getMessage());
-        }
+        \App\Support\FcmService::send($fcmToken, $title, $body, $data);
     }
 
     private function resolveNoSt($user, string $tanggal, string $jenisKarantina = 'H', ?string $requestedNoSt = null): string
