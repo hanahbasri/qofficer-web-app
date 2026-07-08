@@ -13,6 +13,7 @@ class HasilPemeriksaan extends Model
 
     protected $fillable = [
         'id', 'id_surat_tugas', 'id_petugas',
+        'id_lokasi', 'nama_lokasi',
         'lat', 'long', 'target', 'metode', 'temuan',
         'catatan', 'komoditas', 'status_review', 'tgl_periksa',
     ];

@@ -37,7 +37,7 @@ class SuratTugasController extends Controller
         $user = $request->user();
 
         $st = $user->suratTugasDitugaskan()
-            ->with(['lokasi', 'komoditas', 'koordinator:id,nama,nip', 'petugas:id,nama,nip,golongan,pangkat', 'hasilPemeriksaan.dokumentasi'])
+            ->with(['lokasi', 'komoditas', 'koordinator:id,nama,nip', 'petugas:id,nama,nip,golongan,pangkat', 'hasilPemeriksaan.dokumentasi', 'hasilPemeriksaan.petugas:id,nama'])
             ->where('surat_tugas.status', 'aktif')
             ->first();
 
@@ -85,6 +85,7 @@ class SuratTugasController extends Controller
                 'koordinator:id,nama,nip',
                 'petugas:id,nama,nip,golongan,pangkat',
                 'hasilPemeriksaan.dokumentasi',
+                'hasilPemeriksaan.petugas:id,nama',
             ])
             ->where('surat_tugas.id', $id)
             ->firstOrFail();
@@ -421,6 +422,23 @@ class SuratTugasController extends Controller
             'komoditas'          => $st->relationLoaded('komoditas') ? $st->komoditas : [],
             'petugas'            => $st->relationLoaded('petugas') ? $st->petugas : [],
             'status_penerimaan'  => $st->pivot?->status_penerimaan,
+            // Hasil pemeriksaan seluruh tim (bukan cuma milik user) supaya anggota
+            // lain bisa melihat lokasi yang sudah diperiksa rekannya + timeline tracking.
+            'hasil_pemeriksaan'  => $st->relationLoaded('hasilPemeriksaan')
+                ? $st->hasilPemeriksaan->map(fn($h) => [
+                    'id'          => $h->id,
+                    'id_lokasi'   => $h->id_lokasi,
+                    'nama_lokasi' => $h->nama_lokasi,
+                    'id_petugas'  => $h->id_petugas,
+                    'petugas'     => $h->relationLoaded('petugas') && $h->petugas
+                        ? ['id' => $h->petugas->id, 'nama' => $h->petugas->nama]
+                        : null,
+                    'komoditas'   => $h->komoditas,
+                    'target'      => $h->target,
+                    'temuan'      => $h->temuan,
+                    'tgl_periksa' => $h->tgl_periksa?->toISOString(),
+                ])->values()
+                : [],
         ];
     }
 }

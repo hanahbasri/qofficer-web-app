@@ -25,6 +25,8 @@ class HasilPemeriksaanController extends Controller
         $request->validate([
             'id'              => 'required|string|max:50',
             'id_surat_tugas'  => 'required|string|exists:surat_tugas,id',
+            'id_lokasi'       => 'nullable|string',
+            'nama_lokasi'     => 'nullable|string',
             'lat'             => 'nullable|string',
             'long'            => 'nullable|string',
             'target'          => 'nullable|string',
@@ -50,6 +52,8 @@ class HasilPemeriksaanController extends Controller
                 [
                     'id_surat_tugas' => $request->id_surat_tugas,
                     'id_petugas'     => $user->id,
+                    'id_lokasi'      => $request->id_lokasi,
+                    'nama_lokasi'    => $request->nama_lokasi,
                     'lat'            => $request->lat,
                     'long'           => $request->long,
                     'target'         => $request->target,
