@@ -136,9 +136,7 @@
             Daftar UPT
             <small>Unit Pelaksana Teknis Karantina</small>
         </div>
-        <button class="btn btn-brand btn-sm" data-bs-toggle="modal" data-bs-target="#tambahUptModal">
-            <i class="bi bi-plus-lg me-1"></i>Tambah UPT
-        </button>
+        {{-- Tombol Tambah UPT dihilangkan: daftar UPT sudah baku sesuai ketetapan Badan Karantina Indonesia (Administrator hanya dapat mengedit) --}}
     </div>
 
     {{-- Search bar --}}
@@ -222,51 +220,7 @@
         @endif
     </div>
 
-    {{-- Modal Tambah UPT --}}
-    <div class="modal fade" id="tambahUptModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <form method="POST" action="{{ route('admin.upt.store') }}" class="modal-content">
-                @csrf
-                <div class="modal-header">
-                    <h6 class="modal-title fw-bold">
-                        <i class="bi bi-building-add me-2"></i>Tambah UPT
-                    </h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Kode UPT <span class="text-danger">*</span></label>
-                        <input type="text" name="kode" class="form-control" required maxlength="20"
-                            placeholder="1101">
-                        <div class="form-text">Gunakan kode satpel 4 digit sesuai data Barantin.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Nama UPT <span class="text-danger">*</span></label>
-                        <input type="text" name="nama" class="form-control" required
-                            placeholder="BBKHIT Aceh - Satpel Lhokseumawe">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Alias
-                            <span class="text-muted fw-normal" style="font-size:.78rem">(opsional)</span>
-                        </label>
-                        <input type="text" name="alias" class="form-control" maxlength="60"
-                            placeholder="BBKHIT Aceh">
-                    </div>
-                    <div class="mb-1">
-                        <label class="form-label">Wilayah</label>
-                        <input type="text" name="wilayah" class="form-control" placeholder="Aceh">
-                    </div>
-                </div>
-                <div class="modal-footer gap-2">
-                    <button type="button" class="btn btn-outline-brand btn-sm modal-action-btn"
-                        data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-brand btn-sm modal-action-btn">
-                        <i class="bi bi-check2"></i>Simpan
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+    {{-- Modal Tambah UPT dihilangkan — fitur Tambah UPT ditiadakan, Administrator hanya dapat mengedit data UPT yang sudah ada --}}
 
     {{-- Modal Edit UPT --}}
     <div class="modal fade" id="editUptModal" tabindex="-1">
